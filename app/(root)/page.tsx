@@ -1,10 +1,18 @@
 import { Button } from "@/components/ui/button";
+import { isAuthenticated } from "@/lib/helpers/server";
+import Link from "next/link";
 
-export default function Home() {
+export default async function Home() {
+  const isAuth = await isAuthenticated();
+
   return (
     <div className="p-10">
-      <Button className="bg-primary-500 text-primary-100 hover:bg-primary-500 border-transparent">
+      <p>
         Hello World
+      </p>
+
+      <Button render={<Link href="/api/auth/logout" />} type="submit" className="mt-[100px]">
+        {isAuth ? "Logout" : "Not Logged In"}
       </Button>
     </div>
   );

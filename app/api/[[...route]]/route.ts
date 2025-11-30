@@ -12,6 +12,7 @@ const app = new Hono().basePath("/api");
 
 app.onError((err, c) => {
     if (err instanceof AppwriteException) {
+        console.log(err.message)
         if (err.code === 401 && !publicApiRoutes.some(route => c.req.url.includes(route))) {
             return c.redirect("/sign-in");
         }
@@ -20,17 +21,22 @@ app.onError((err, c) => {
     }
 
     if (err instanceof HTTPException) {
-        console.log(err.cause)
+        console.log(err.message)
         return err.getResponse()
     }
+
+    console.log(err.message)
+
 
     return c.json({ message: err.message, cause: err.cause }, 500);
 
 })
 
+
 const routes = app.route("/auth", auth);
 
 
+export type AppType = typeof routes;
 
 export const GET = handle(routes);
 export const POST = handle(routes);

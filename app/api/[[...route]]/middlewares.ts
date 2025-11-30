@@ -36,8 +36,14 @@ export const appwriteSessionMiddleware = createMiddleware<AppwriteSessionMiddlew
     await next();
 });
 
+export type SessionMiddlewareContext = {
+    Variables: {
+        session: string;
+    }
+}
 
-export const sessionMiddleware = createMiddleware<{ Variables: { session: string } }>(async (c, next) => {
+
+export const sessionMiddleware = createMiddleware<SessionMiddlewareContext>(async (c, next) => {
     const session = getCookie(c, appwriteConfig.sessionName);
 
     if (!session) {

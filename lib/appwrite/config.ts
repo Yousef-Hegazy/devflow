@@ -49,3 +49,16 @@ export async function createAdminClient() {
         },
     };
 }
+
+export async function createClient(session?: string) {
+    const client = new Client()
+        .setEndpoint(appwriteConfig.url)
+        .setProject(appwriteConfig.projectId)
+        .setSession(session || "");
+
+    return {
+        get account() {
+            return new Account(client);
+        },
+    };
+}
