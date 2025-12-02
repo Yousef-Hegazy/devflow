@@ -80,6 +80,18 @@ const app = new Hono()
 
         return c.redirect(redirectUrl);
     })
+    .get("/login/google", async (c) => {
+        const { account } = await createAdminClient();
+
+        const redirectUrl = await account.createOAuth2Token({
+            provider: OAuthProvider.Google,
+            success: "http://localhost:3000/api/auth/oauth-success",
+            failure: "http://localhost:3000/sign-in",
+            scopes: ["openid", "email", "profile"]
+        });
+
+        return c.redirect(redirectUrl);
+    })
     .get("/oauth-success", async (c) => {
         const { account } = await createAdminClient();
 
