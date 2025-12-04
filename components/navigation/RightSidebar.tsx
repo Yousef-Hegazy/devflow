@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import TagCard from "../forms/cards/TagCard";
 
 const topQuestions = [
   {
@@ -17,6 +18,39 @@ const topQuestions = [
   {
     $id: "4",
     title: "What is the difference between React hooks and class components?",
+  },
+];
+
+const tags = [
+  {
+    $id: "1",
+    name: "react",
+    questionsNo: 120,
+  },
+  {
+    $id: "2",
+    name: "javascript",
+    questionsNo: 80,
+  },
+  {
+    $id: "3",
+    name: "nextjs",
+    questionsNo: 60,
+  },
+  {
+    $id: "4",
+    name: "tailwindcss",
+    questionsNo: 45,
+  },
+  {
+    $id: "5",
+    name: "react-query",
+    questionsNo: 30,
+  },
+  {
+    $id: "6",
+    name: "docker",
+    questionsNo: 50,
   },
 ];
 
@@ -41,6 +75,16 @@ const RightSidebar = () => {
                 height={24}
               />
             </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-16">
+        <h3 className="h3-bold text-dark200_light900">Popular Tags</h3>
+
+        <div className="mt-7 flex flex-col gap-4">
+          {tags.map((tag) => (
+            <TagCard key={tag.$id} {...tag} showCount compact />
           ))}
         </div>
       </div>

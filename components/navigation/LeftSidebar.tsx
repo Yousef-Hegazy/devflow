@@ -14,7 +14,7 @@ const LeftSidebar = () => {
         <Link href="/sign-in">
           <Button
             render={<span />}
-            className="small-medium! bg-secondary! min-h-[41px]! w-full! rounded-lg border-0! py-3 shadow-none! ring-0! lg:px-4"
+            className="small-medium! lg:body-medium! bg-secondary! min-h-[41px]! w-full! rounded-lg border-0! py-3 shadow-none! ring-0! lg:px-4"
           >
             <Image
               src="/icons/account.svg"
@@ -30,7 +30,7 @@ const LeftSidebar = () => {
         <Link href="/sign-up">
           <Button
             render={<span />}
-            className="small-medium! light-border-2! btn-tertiary! text-dark400_light900! min-h-[41px]! w-full! rounded-lg border py-3 shadow-none lg:px-4"
+            className="small-medium! lg:body-medium! light-border-2! btn-tertiary! text-dark400_light900! min-h-[41px]! w-full! rounded-lg border py-3 shadow-none lg:px-4"
           >
             <Image
               src="/icons/sign-up.svg"
