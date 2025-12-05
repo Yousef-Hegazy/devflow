@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import TagCard from "../forms/cards/TagCard";
+import TagCard from "../cards/TagCard";
 
 const topQuestions = [
   {

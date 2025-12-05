@@ -1,3 +1,4 @@
+import LocalSearch from "@/components/search/LocalSearch";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -14,7 +15,9 @@ export default async function Home() {
           Ask a Question
         </Button>
       </section>
-      <section className="mt-11">LocalSearch</section>
+      <section className="mt-11">
+        <LocalSearch />
+      </section>
       HomeFilter
       <div className="mt-10 flex w-full flex-col gap-6">
         <p>Question Card 1</p>
