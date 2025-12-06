@@ -1,9 +1,15 @@
-import React from 'react'
+import QuestionForm from "@/components/forms/QuestionForm";
 
-const AskAQuestion = () => {
+const AskQuestion = () => {
   return (
-    <div>AskAQuestion</div>
-  )
-}
+    <>
+      <h1 className="h1-bold text-dark100_light900">Ask a Question</h1>
 
-export default AskAQuestion
+      <div className="mt-9">
+        <QuestionForm />
+      </div>
+    </>
+  );
+};
+
+export default AskQuestion;

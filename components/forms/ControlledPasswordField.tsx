@@ -3,7 +3,7 @@
 import { Control, Controller, FieldPath, FieldValues } from "react-hook-form";
 import { Field, FieldLabel } from "../ui/field";
 import { InputProps } from "../ui/input";
-import PasswordInput from "./PasswordInput";
+import PasswordInput from "../ui/PasswordInput";
 
 interface ControlledFieldProps<TFieldValues extends FieldValues>
   extends InputProps {
@@ -25,7 +25,7 @@ const ControlledPasswordField = <TFieldValues extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState: { invalid, error } }) => (
-        <Field invalid={invalid}>
+        <Field className="flex flex-col items-start gap-2" invalid={invalid}>
           <FieldLabel className="capitalize">{label || name}</FieldLabel>
           <PasswordInput
             {...field}

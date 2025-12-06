@@ -37,5 +37,612 @@
                 "mockNumbers": []
             }
         }
-    }
+    },
+    "tablesDB": [
+        {
+            "$id": "6933f9060011aaa2a9d5",
+            "name": "devflow",
+            "enabled": true
+        }
+    ],
+    "tables": [
+        {
+            "$id": "appuser",
+            "$permissions": [],
+            "databaseId": "6933f9060011aaa2a9d5",
+            "name": "AppUser",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "name",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "username",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "email",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "format": "email",
+                    "default": null
+                },
+                {
+                    "key": "bio",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 2500,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "image",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "format": "url",
+                    "default": null
+                },
+                {
+                    "key": "location",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "portfolio",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "format": "url",
+                    "default": null
+                },
+                {
+                    "key": "reputation",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
+                },
+                {
+                    "key": "answers",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "answer",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "author",
+                    "onDelete": "cascade",
+                    "side": "parent"
+                },
+                {
+                    "key": "questions",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "question",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "author",
+                    "onDelete": "cascade",
+                    "side": "parent"
+                },
+                {
+                    "key": "votes",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "vote",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "author",
+                    "onDelete": "cascade",
+                    "side": "parent"
+                },
+                {
+                    "key": "collection",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "collection",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "author",
+                    "onDelete": "cascade",
+                    "side": "parent"
+                },
+                {
+                    "key": "interaction",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "interaction",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "user",
+                    "onDelete": "cascade",
+                    "side": "parent"
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "user_email_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "email"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "question",
+            "$permissions": [
+                "create(\"users\")",
+                "read(\"users\")"
+            ],
+            "databaseId": "6933f9060011aaa2a9d5",
+            "name": "Question",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "title",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 512,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "content",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 2500,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "views",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
+                },
+                {
+                    "key": "upvotes",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
+                },
+                {
+                    "key": "downvotes",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
+                },
+                {
+                    "key": "answersCount",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
+                },
+                {
+                    "key": "tags",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "questiontag",
+                    "relationType": "manyToOne",
+                    "twoWay": true,
+                    "twoWayKey": "question",
+                    "onDelete": "setNull",
+                    "side": "child"
+                },
+                {
+                    "key": "author",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "appuser",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "questions",
+                    "onDelete": "cascade",
+                    "side": "child"
+                },
+                {
+                    "key": "answers",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "answer",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "question",
+                    "onDelete": "cascade",
+                    "side": "parent"
+                },
+                {
+                    "key": "votes",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "vote",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "question",
+                    "onDelete": "cascade",
+                    "side": "parent"
+                },
+                {
+                    "key": "collection",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "collection",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "question",
+                    "onDelete": "cascade",
+                    "side": "parent"
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "tag",
+            "$permissions": [
+                "create(\"users\")",
+                "read(\"users\")"
+            ],
+            "databaseId": "6933f9060011aaa2a9d5",
+            "name": "Tag",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "title",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "questionsCount",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
+                },
+                {
+                    "key": "questions",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "questiontag",
+                    "relationType": "manyToOne",
+                    "twoWay": true,
+                    "twoWayKey": "tag",
+                    "onDelete": "setNull",
+                    "side": "child"
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "tag_name_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "title"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "questiontag",
+            "$permissions": [
+                "create(\"users\")",
+                "read(\"users\")"
+            ],
+            "databaseId": "6933f9060011aaa2a9d5",
+            "name": "QuestionsTags",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "question",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "question",
+                    "relationType": "manyToOne",
+                    "twoWay": true,
+                    "twoWayKey": "tags",
+                    "onDelete": "setNull",
+                    "side": "parent"
+                },
+                {
+                    "key": "tag",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "tag",
+                    "relationType": "manyToOne",
+                    "twoWay": true,
+                    "twoWayKey": "questions",
+                    "onDelete": "setNull",
+                    "side": "parent"
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "answer",
+            "$permissions": [
+                "create(\"users\")",
+                "read(\"users\")"
+            ],
+            "databaseId": "6933f9060011aaa2a9d5",
+            "name": "Answer",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "author",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "appuser",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "answers",
+                    "onDelete": "cascade",
+                    "side": "child"
+                },
+                {
+                    "key": "question",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "question",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "answers",
+                    "onDelete": "cascade",
+                    "side": "child"
+                },
+                {
+                    "key": "content",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "upvotes",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
+                },
+                {
+                    "key": "downvotes",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
+                },
+                {
+                    "key": "votes",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "vote",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "answer",
+                    "onDelete": "cascade",
+                    "side": "parent"
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "vote",
+            "$permissions": [],
+            "databaseId": "6933f9060011aaa2a9d5",
+            "name": "Vote",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "author",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "appuser",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "votes",
+                    "onDelete": "cascade",
+                    "side": "child"
+                },
+                {
+                    "key": "question",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "question",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "votes",
+                    "onDelete": "cascade",
+                    "side": "child"
+                },
+                {
+                    "key": "answer",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "answer",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "votes",
+                    "onDelete": "cascade",
+                    "side": "child"
+                },
+                {
+                    "key": "type",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "elements": [
+                        "upvote",
+                        "downvote"
+                    ],
+                    "format": "enum",
+                    "default": null
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "collection",
+            "$permissions": [],
+            "databaseId": "6933f9060011aaa2a9d5",
+            "name": "Collection",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "author",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "appuser",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "collection",
+                    "onDelete": "cascade",
+                    "side": "child"
+                },
+                {
+                    "key": "question",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "question",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "collection",
+                    "onDelete": "cascade",
+                    "side": "child"
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "interaction",
+            "$permissions": [],
+            "databaseId": "6933f9060011aaa2a9d5",
+            "name": "Interaction",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "user",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "appuser",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "interaction",
+                    "onDelete": "cascade",
+                    "side": "child"
+                },
+                {
+                    "key": "action",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 500,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "actionId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 500,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "actionType",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "elements": [
+                        "question",
+                        "answer"
+                    ],
+                    "format": "enum",
+                    "default": null
+                }
+            ],
+            "indexes": []
+        }
+    ]
 }

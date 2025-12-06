@@ -3,28 +3,26 @@
 import { cn } from "@/lib/utils";
 import { Control, Controller, FieldPath, FieldValues } from "react-hook-form";
 import { Field, FieldDescription, FieldLabel } from "../ui/field";
-import { Input, InputProps } from "../ui/input";
+import { Textarea, TextareaProps } from "../ui/textarea";
 
-interface ControlledFieldProps<TFieldValues extends FieldValues>
-  extends InputProps {
+interface ControlledTextareaProps<TFieldValues extends FieldValues>
+  extends TextareaProps {
   name: FieldPath<TFieldValues>;
   control: Control<TFieldValues>;
   label?: string;
   placeholder?: string;
-  type?: string;
   description?: React.ReactNode;
 }
 
-const ControlledField = <TFieldValues extends FieldValues>({
+const ControlledTextarea = <TFieldValues extends FieldValues>({
   name,
   control,
   label,
   placeholder = "",
-  type = "text",
   className,
   description,
   ...props
-}: ControlledFieldProps<TFieldValues>) => {
+}: ControlledTextareaProps<TFieldValues>) => {
   return (
     <Controller
       control={control}
@@ -32,16 +30,15 @@ const ControlledField = <TFieldValues extends FieldValues>({
       render={({ field, fieldState: { invalid, error } }) => (
         <Field className="flex flex-col items-start gap-2" invalid={invalid}>
           <FieldLabel className="capitalize">{label || name}</FieldLabel>
-          <Input
+          <Textarea
             {...field}
             className={cn("min-h-12", className)}
-            type={type}
             placeholder={placeholder}
             size="lg"
             aria-invalid={invalid}
             {...props}
           />
-           {description ? (
+          {description ? (
             <FieldDescription>{description}</FieldDescription>
           ) : null}
           {invalid ? (
@@ -53,4 +50,4 @@ const ControlledField = <TFieldValues extends FieldValues>({
   );
 };
 
-export default ControlledField;
+export default ControlledTextarea;

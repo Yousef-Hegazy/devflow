@@ -4,8 +4,8 @@ import Link from "next/link";
 
 type Props = {
   $id: string;
+  questionsNo?: number;
   name: string;
-  questionsNo: number;
   showCount?: boolean;
   compact?: boolean;
 };

@@ -9,7 +9,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { useToggle } from "@uidotdev/usehooks";
-import { InputProps } from "../ui/input";
+import { InputProps } from "./input";
 import { cn } from "@/lib/utils";
 
 export default function PasswordInput({ className, ...props }: InputProps) {

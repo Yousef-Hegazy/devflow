@@ -1,12 +1,12 @@
 "use client";
 
-import { Form as FormPrimitive } from "@base-ui-components/react/form";
 
 import { cn } from "@/lib/utils";
 
-function Form({ className, ...props }: FormPrimitive.Props) {
+function Form({ className, ...props }: React.FormHTMLAttributes<HTMLFormElement>) {
   return (
-    <FormPrimitive
+    <form
+      slot="form"
       className={cn("flex w-full flex-col gap-4", className)}
       data-slot="form"
       {...props}

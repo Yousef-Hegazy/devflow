@@ -1,3 +1,4 @@
+import HomeFilter from "@/components/filters/HomeFilter";
 import LocalSearch from "@/components/search/LocalSearch";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -16,9 +17,9 @@ export default async function Home() {
         </Button>
       </section>
       <section className="mt-11">
-        <LocalSearch />
+        <LocalSearch placeholder="Search Questions..." />
       </section>
-      HomeFilter
+      <HomeFilter />
       <div className="mt-10 flex w-full flex-col gap-6">
         <p>Question Card 1</p>
         <p>Question Card 1</p>

@@ -1,5 +1,4 @@
 import { appwriteConfig, createAdminClient, createClient } from "@/lib/appwrite/config";
-import { getAppwriteInitialsAvatarUrl } from "@/lib/helpers/server";
 import { SignInSchema } from "@/lib/validators/authSchemas";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
@@ -73,7 +72,7 @@ const app = new Hono()
 
         const redirectUrl = await account.createOAuth2Token({
             provider: OAuthProvider.Github,
-            success: "http://localhost:3000/api/auth/oauth-success",
+            success: "http://localhost:3000/api/auth/github-success",
             failure: "http://localhost:3000/sign-in",
             scopes: ["read:user", "user:email"]
         });
@@ -85,15 +84,15 @@ const app = new Hono()
 
         const redirectUrl = await account.createOAuth2Token({
             provider: OAuthProvider.Google,
-            success: "http://localhost:3000/api/auth/oauth-success",
+            success: "http://localhost:3000/api/auth/google-success",
             failure: "http://localhost:3000/sign-in",
             scopes: ["openid", "email", "profile"]
         });
 
         return c.redirect(redirectUrl);
     })
-    .get("/oauth-success", async (c) => {
-        const { account } = await createAdminClient();
+    .get("/github-success", async (c) => {
+        const { account, database } = await createAdminClient();
 
         const { userId, secret } = c.req.query();
 
@@ -113,11 +112,23 @@ const app = new Hono()
 
         const { account: sessionAccount } = await createClient(session.secret);
 
-        const user = await sessionAccount.get();
+        const ac = await sessionAccount.get();
+
 
         await sessionAccount.updatePrefs({
-            prefs: { "image": await getAppwriteInitialsAvatarUrl(user.name, 100, 100) },
+            prefs: { "provider": "github" },
         });
+
+        await database.createRow({
+            databaseId: appwriteConfig.databaseId,
+            tableId: appwriteConfig.usersTableId,
+            rowId: ac.$id,
+            data: {
+                name: ac.name,
+                email: ac.email,
+            }
+        })
+
 
         setCookie(c, appwriteConfig.sessionName, session.secret, {
             httpOnly: true,
