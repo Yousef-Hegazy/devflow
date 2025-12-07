@@ -178,4 +178,5 @@ export  const techMap: { [key: string]: string } = {
     rspec: "devicon-rspec-plain",
     css: "devicon-css3-plain",
     html: "devicon-html5-plain",
+    appwrite: "devicon-appwrite-plain",
   };
