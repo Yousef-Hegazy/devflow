@@ -6,26 +6,24 @@ import { handle } from "hono/vercel";
 import { AppwriteException } from "node-appwrite";
 import auth from "./auth";
 
-
-
 const app = new Hono().basePath("/api");
 
 app.onError((err, c) => {
     if (err instanceof AppwriteException) {
-        console.log(err.message)
         if (err.code === 401 && !publicApiRoutes.some(route => c.req.url.includes(route))) {
             return c.redirect("/sign-in");
         }
+        console.log(err)
 
-        return c.json({ message: `${err.type} - ${err.message}`, cause: err.cause }, err.code as ContentfulStatusCode);
+        return c.json({ message: err.message, cause: err.cause }, err.code as ContentfulStatusCode);
     }
 
     if (err instanceof HTTPException) {
         console.log(err.message)
-        return err.getResponse()
+        return c.json({ message: err.message }, err.status);
     }
 
-    console.log(err.message)
+    console.log(err)
 
 
     return c.json({ message: err.message, cause: err.cause }, 500);

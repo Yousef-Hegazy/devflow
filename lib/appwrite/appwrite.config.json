@@ -182,6 +182,15 @@
                     "twoWayKey": "user",
                     "onDelete": "cascade",
                     "side": "parent"
+                },
+                {
+                    "key": "provider",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 }
             ],
             "indexes": [
@@ -223,7 +232,7 @@
                     "type": "string",
                     "required": true,
                     "array": false,
-                    "size": 2500,
+                    "size": 5000,
                     "default": null,
                     "encrypt": false
                 },
@@ -460,7 +469,7 @@
                     "type": "string",
                     "required": true,
                     "array": false,
-                    "size": 1000,
+                    "size": 5000,
                     "default": null,
                     "encrypt": false
                 },

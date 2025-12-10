@@ -1,13 +1,15 @@
 "use client";
 
+import { useSignUp } from "@/lib/queries/auth";
 import { SignUpSchema, SignUpSchemaType } from "@/lib/validators/authSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { Button } from "../ui/button";
 import { Form } from "../ui/form";
 import ControlledField from "./ControlledField";
 import ControlledPasswordField from "./ControlledPasswordField";
-import Link from "next/link";
+import LoadingButton from "../ui/LoadingButton";
 
 const SignUpForm = () => {
   const { handleSubmit, control } = useForm<SignUpSchemaType>({
@@ -21,9 +23,9 @@ const SignUpForm = () => {
     },
   });
 
-  const onSubmit = (data: SignUpSchemaType) => {
-    console.log(data);
-  };
+  const { mutate: signUp, isPending } = useSignUp();
+
+  const onSubmit = (data: SignUpSchemaType) => signUp(data);
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
@@ -54,17 +56,23 @@ const SignUpForm = () => {
         placeholder="Enter your password"
       />
 
-      <Button
+      <LoadingButton
+        isLoading={isPending}
         type="submit"
         className="primary-gradient paragraph-medium rounded-2 font-inter text-light-900! min-h-12 w-full border-none px-4 py-3"
       >
         Sign Up
-      </Button>
+      </LoadingButton>
 
       <div className="flex items-center justify-start gap-1">
         <p>Already have an account?</p>
         <Button
-          render={<Link className="paragraph-medium primary-text-gradient!" href="/sign-in" />}
+          render={
+            <Link
+              className="paragraph-medium primary-text-gradient!"
+              href="/sign-in"
+            />
+          }
           className="p-0"
           variant="link"
         >

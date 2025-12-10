@@ -1,11 +1,13 @@
 "use client";
 
+import { useSignIn } from "@/lib/queries/auth";
 import { SignInSchema, SignInSchemaType } from "@/lib/validators/authSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { Button } from "../ui/button";
 import { Form } from "../ui/form";
+import LoadingButton from "../ui/LoadingButton";
 import ControlledField from "./ControlledField";
 import ControlledPasswordField from "./ControlledPasswordField";
 
@@ -19,9 +21,9 @@ const SignInForm = () => {
     },
   });
 
-  const onSubmit = (data: SignInSchemaType) => {
-    console.log(data);
-  };
+  const { mutate: signIn, isPending } = useSignIn();
+
+  const onSubmit = (data: SignInSchemaType) => signIn(data);
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
@@ -38,12 +40,13 @@ const SignInForm = () => {
         placeholder="Enter your password"
       />
 
-      <Button
+      <LoadingButton
+        isLoading={isPending}
         type="submit"
         className="primary-gradient paragraph-medium rounded-2 font-inter text-light-900! min-h-12 w-full border-none px-4 py-3"
       >
         Sign In
-      </Button>
+      </LoadingButton>
 
       <div className="flex items-center justify-start gap-1">
         <p>Don&apos;t have an account?</p>

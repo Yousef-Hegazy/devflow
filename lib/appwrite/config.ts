@@ -72,5 +72,8 @@ export async function createClient(session?: string) {
         get account() {
             return new Account(client);
         },
+        get database() {
+            return new TablesDB(client);
+        },
     };
 }

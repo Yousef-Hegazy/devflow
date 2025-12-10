@@ -9,8 +9,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useTheme } from "next-themes";
 import { useIsClient } from "@uidotdev/usehooks";
+import { useTheme } from "next-themes";
 
 const ThemePicker = () => {
   const isClient = useIsClient();
@@ -22,8 +22,12 @@ const ThemePicker = () => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button aria-label="Select theme" size="icon" variant="outline">
-          {displayTheme === "light" && <SunIcon aria-hidden="true" size={18} />}
-          {displayTheme === "dark" && <MoonIcon aria-hidden="true" size={18} />}
+          {displayTheme?.includes("light") && (
+            <SunIcon aria-hidden="true" size={18} />
+          )}
+          {displayTheme?.includes("dark") && (
+            <MoonIcon aria-hidden="true" size={18} />
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="min-w-32">

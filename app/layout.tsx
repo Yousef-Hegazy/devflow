@@ -1,8 +1,12 @@
+import AuthHydrator from "@/components/AuthHydrator";
+import Loading from "@/components/Loading";
 import { AnchoredToastProvider, ToastProvider } from "@/components/ui/toast";
+import { getCurrentUser } from "@/lib/helpers/server";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { Inter, Space_Grotesk } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
+import { Suspense } from "react";
 import "./globals.css";
 import QueryProvider from "./providers/QueryProvider";
 
@@ -42,34 +46,45 @@ export default function Layout({
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <ToastProvider>
-            <AnchoredToastProvider>
-              <QueryProvider>
-                <NextTopLoader
-                  initialPosition={0.08}
-                  crawlSpeed={200}
-                  height={6}
-                  crawl={true}
-                  showSpinner={false}
-                  easing="ease"
-                  speed={200}
-                  zIndex={1600}
-                  template='<div id="top-loader" class="bar" role="bar"><div class="peg"></div></div> 
-  <div class="spinner" role="spinner"><div class="spinner-icon"></div></div>'
-                  showAtBottom={false}
-                />
-                {children}
-              </QueryProvider>
-            </AnchoredToastProvider>
-          </ToastProvider>
-        </ThemeProvider>
+        <Suspense fallback={<Loading />}>
+          <LayoutContent>{children}</LayoutContent>
+        </Suspense>
       </body>
     </html>
+  );
+}
+
+async function LayoutContent({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
+
+  return (
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <ToastProvider>
+        <AnchoredToastProvider>
+          <QueryProvider>
+            <NextTopLoader
+              initialPosition={0.08}
+              crawlSpeed={200}
+              height={6}
+              crawl={true}
+              showSpinner={false}
+              easing="ease"
+              speed={200}
+              zIndex={1600}
+              template='<div id="top-loader" class="bar" role="bar"><div class="peg"></div></div> 
+  <div class="spinner" role="spinner"><div class="spinner-icon"></div></div>'
+              showAtBottom={false}
+            />
+            {children}
+            <AuthHydrator user={user} />
+          </QueryProvider>
+        </AnchoredToastProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

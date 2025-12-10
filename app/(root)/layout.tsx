@@ -8,7 +8,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-const RootLayout = ({ children }: Props) => {
+const RootLayout = async ({ children }: Props) => {
   return (
     <main className="background-light850_dark100 relative">
       <Navbar />
