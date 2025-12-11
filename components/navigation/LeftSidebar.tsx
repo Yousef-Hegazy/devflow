@@ -1,13 +1,11 @@
-import { getCurrentUser } from "@/lib/helpers/server";
+import { AppUser } from "@/lib/appwrite/types/appwrite";
 import { LogOut } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import NavLinks from "./navbar/NavLinks";
 
-const LeftSidebar = async () => {
-  const user = await getCurrentUser();
-
+const LeftSidebar = async ({ user }: { user: AppUser | null }) => {
   return (
     <section className="custom-scrollbar background-light900_dark200 light-border shadow-light-300 sticky top-0 left-0 flex h-screen flex-col justify-between overflow-y-auto border-r p-6 pt-36 max-sm:hidden lg:w-[266px] dark:shadow-none">
       <div className="flex flex-1 flex-col gap-6">
@@ -21,7 +19,9 @@ const LeftSidebar = async () => {
             render={<Link href="/api/auth/logout" />}
           >
             <LogOut className="text-foreground size-5" />
-            <span className="text-dark300_light900 max-lg:hidden">Logout</span>
+            <span className="text-dark300_light900 max-lg:hidden">
+              Sign Out
+            </span>
           </Button>
         ) : (
           <>

@@ -1,9 +1,11 @@
+import UserAvatar from "@/components/UserAvatar";
+import { AppUser } from "@/lib/appwrite/types/appwrite";
 import Image from "next/image";
 import Link from "next/link";
-import ThemePicker from "./ThemePicker";
 import MobileNavigation from "./MobileNavigation";
+import ThemePicker from "./ThemePicker";
 
-const Navbar = () => {
+const Navbar = ({ user }: { user: AppUser | null }) => {
   return (
     <nav className="flex-between background-light900_dark200 shadow-light-300 fixed z-50 w-full gap-5 p-6 sm:px-12 dark:shadow-none">
       <Link
@@ -27,6 +29,8 @@ const Navbar = () => {
 
       <div className="flex-between gap-5">
         <ThemePicker />
+
+        {user?.$id ? <UserAvatar user={user} /> : null}
 
         <MobileNavigation />
       </div>

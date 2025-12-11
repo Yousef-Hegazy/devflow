@@ -1,7 +1,7 @@
 import AuthHydrator from "@/components/AuthHydrator";
 import Loading from "@/components/Loading";
 import { AnchoredToastProvider, ToastProvider } from "@/components/ui/toast";
-import { getCurrentUser } from "@/lib/helpers/server";
+import { getCurrentUser } from "@/lib/server";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { Inter, Space_Grotesk } from "next/font/google";

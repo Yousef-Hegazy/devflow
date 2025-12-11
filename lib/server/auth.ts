@@ -11,12 +11,11 @@ export async function getSession() {
     return session?.value || null;
 }
 
-
 export const getCurrentUser = async () => {
     "use cache: private";
 
-    cacheLife({ revalidate: 300 /* 5 minutes */ });
     cacheTag(CACHE_KEYS.CURRENT_USER);
+    cacheLife({ revalidate: 300 /* 5 minutes */ });
 
     try {
         const { account, database } = await createSessionClient();
@@ -55,19 +54,4 @@ export async function isAuthenticated() {
 
     const session = await getSession();
     return !!session;
-}
-
-export function getAppwriteInitialsAvatarUrl(name: string, width?: number, height?: number) {
-    const url = `${appwriteConfig.url}/avatars/initials`;
-
-    const sp = new URLSearchParams();
-
-    sp.append("name", name);
-
-    if (width) sp.append("width", width.toString());
-    if (height) sp.append("height", height.toString());
-
-    sp.append("project", appwriteConfig.projectId);
-
-    return `${url}?${sp.toString()}`;
 }
