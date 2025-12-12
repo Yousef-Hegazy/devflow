@@ -1,4 +1,5 @@
 import { AppUser } from "@/lib/appwrite/types/appwrite";
+import { logout } from "@/actions/auth";
 import { LogOut } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,15 +15,17 @@ const LeftSidebar = async ({ user }: { user: AppUser | null }) => {
 
       <div className="flex flex-col gap-3">
         {user?.$id ? (
-          <Button
-            className="base-medium text-foreground w-fit rounded border-0 bg-transparent px-4 py-3 shadow-transparent inset-shadow-transparent hover:bg-transparent"
-            render={<Link href="/api/auth/logout" />}
-          >
-            <LogOut className="text-foreground size-5" />
-            <span className="text-dark300_light900 max-lg:hidden">
-              Sign Out
-            </span>
-          </Button>
+          <form action={logout}>
+            <Button
+              type="submit"
+              className="base-medium text-foreground w-fit rounded border-0 bg-transparent px-4 py-3 shadow-transparent inset-shadow-transparent hover:bg-transparent"
+            >
+              <LogOut className="text-foreground size-5" />
+              <span className="text-dark300_light900 max-lg:hidden">
+                Sign Out
+              </span>
+            </Button>
+          </form>
         ) : (
           <>
             <Link href="/sign-in">

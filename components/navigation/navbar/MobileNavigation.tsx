@@ -11,6 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { logout } from "@/actions/auth";
 import useAuthStore from "@/stores/authStore";
 import { LogOut } from "lucide-react";
 import Image from "next/image";
@@ -59,17 +60,17 @@ const MobileNavigation = () => {
             <div className="flex flex-col gap-3">
               {user?.$id ? (
                 <SheetClose>
-                  <Link href="/api/auth/logout">
+                  <form action={logout}>
                     <Button
+                      type="submit"
                       className="base-medium text-foreground w-fit rounded border-0 bg-transparent px-4 py-3 shadow-transparent inset-shadow-transparent hover:bg-transparent"
-                      render={<Link href="/api/auth/logout" />}
                     >
                       <LogOut className="text-foreground size-5" />
                       <span className="text-dark300_light900">
                         Sign Out
                       </span>
                     </Button>
-                  </Link>
+                  </form>
                 </SheetClose>
               ) : (
                 <>

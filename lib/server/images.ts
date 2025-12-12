@@ -1,5 +1,5 @@
 import "server-only";
-import { appwriteConfig } from "../appwrite/config";
+import { appwriteConfig } from "../constants/server";
 
 
 

@@ -1,9 +1,10 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { cookies } from "next/headers";
 import "server-only";
-import { appwriteConfig, createSessionClient } from "../appwrite/config";
+import { createSessionClient } from "../appwrite/config";
 import { AppUser } from "../appwrite/types/appwrite";
 import { CACHE_KEYS } from "../constants/cacheKeys";
+import { appwriteConfig } from "../constants/server";
 
 export async function getSession() {
     const cookieStore = await cookies();
@@ -11,7 +12,7 @@ export async function getSession() {
     return session?.value || null;
 }
 
-export const getCurrentUser = async () => {
+export async function getCurrentUser() {
     "use cache: private";
 
     cacheTag(CACHE_KEYS.CURRENT_USER);
@@ -44,14 +45,6 @@ export const getCurrentUser = async () => {
 
 
 export async function isAuthenticated() {
-    "use cache: private";
-
-    cacheLife({
-        revalidate: 300
-    });
-
-    cacheTag(CACHE_KEYS.CURRENT_USER, "auth-check");
-
     const session = await getSession();
     return !!session;
 }

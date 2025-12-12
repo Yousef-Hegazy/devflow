@@ -1,6 +1,7 @@
 "use client";
 
 import { Question } from "@/lib/appwrite/types/appwrite";
+import { useCreateQuestion } from "@/lib/queries/questions";
 import {
   AskQuestionSchema,
   AskQuestionSchemaType,
@@ -9,18 +10,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, ControllerRenderProps, useForm } from "react-hook-form";
 import TagCard from "../cards/TagCard";
 import MarkdownEditor from "../MarkdownEditor";
-import { Button } from "../ui/button";
 import { Field, FieldDescription, FieldLabel } from "../ui/field";
 import { Form } from "../ui/form";
 import { Input } from "../ui/input";
+import LoadingButton from "../ui/LoadingButton";
 import ControlledField from "./ControlledField";
 
 type Props = {
   question?: Question;
+  userId: string;
 };
 
-const QuestionForm = ({ question }: Props) => {
-  // const [tagInputValue, setTagInputValue] = useState("");
+const QuestionForm = ({ question, userId }: Props) => {
   const { control, handleSubmit, setError, clearErrors } =
     useForm<AskQuestionSchemaType>({
       resolver: zodResolver(AskQuestionSchema),
@@ -32,9 +33,11 @@ const QuestionForm = ({ question }: Props) => {
       },
     });
 
-  const onSubmit = (data: AskQuestionSchemaType) => {
-    console.log(data);
-  };
+  const { mutate: askQuestion, isPending: isCreatingQuestion } =
+    useCreateQuestion();
+
+  const onSubmit = (data: AskQuestionSchemaType) =>
+    askQuestion({ userId, question: data });
 
   function handleInputKeyDown(
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -177,13 +180,14 @@ const QuestionForm = ({ question }: Props) => {
       /> */}
 
       <div className="mt-16 flex justify-end">
-        <Button
+        <LoadingButton
+          isLoading={isCreatingQuestion}
           type="submit"
           className="primary-gradient text-light-900 w-fit border-0 py-4"
           size="xl"
         >
           Ask Question
-        </Button>
+        </LoadingButton>
       </div>
     </Form>
   );

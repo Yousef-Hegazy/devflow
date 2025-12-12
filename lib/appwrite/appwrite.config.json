@@ -48,11 +48,16 @@
     "tables": [
         {
             "$id": "appuser",
-            "$permissions": [],
+            "$permissions": [
+                "create(\"any\")",
+                "read(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "AppUser",
             "enabled": true,
-            "rowSecurity": true,
+            "rowSecurity": false,
             "columns": [
                 {
                     "key": "name",
@@ -210,13 +215,15 @@
         {
             "$id": "question",
             "$permissions": [
-                "create(\"users\")",
-                "read(\"users\")"
+                "create(\"any\")",
+                "read(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
             ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "Question",
             "enabled": true,
-            "rowSecurity": true,
+            "rowSecurity": false,
             "columns": [
                 {
                     "key": "title",
@@ -338,13 +345,15 @@
         {
             "$id": "tag",
             "$permissions": [
-                "create(\"users\")",
-                "read(\"users\")"
+                "create(\"any\")",
+                "read(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
             ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "Tag",
             "enabled": true,
-            "rowSecurity": true,
+            "rowSecurity": false,
             "columns": [
                 {
                     "key": "title",
@@ -394,13 +403,15 @@
         {
             "$id": "questiontag",
             "$permissions": [
-                "create(\"users\")",
-                "read(\"users\")"
+                "create(\"any\")",
+                "read(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
             ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "QuestionsTags",
             "enabled": true,
-            "rowSecurity": true,
+            "rowSecurity": false,
             "columns": [
                 {
                     "key": "question",
@@ -432,8 +443,10 @@
         {
             "$id": "answer",
             "$permissions": [
-                "create(\"users\")",
-                "read(\"users\")"
+                "create(\"any\")",
+                "read(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
             ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "Answer",
@@ -508,7 +521,12 @@
         },
         {
             "$id": "vote",
-            "$permissions": [],
+            "$permissions": [
+                "create(\"any\")",
+                "read(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "Vote",
             "enabled": true,
@@ -567,7 +585,12 @@
         },
         {
             "$id": "collection",
-            "$permissions": [],
+            "$permissions": [
+                "create(\"any\")",
+                "read(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "Collection",
             "enabled": true,
@@ -602,7 +625,12 @@
         },
         {
             "$id": "interaction",
-            "$permissions": [],
+            "$permissions": [
+                "create(\"any\")",
+                "read(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "Interaction",
             "enabled": true,

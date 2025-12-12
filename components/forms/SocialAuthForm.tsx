@@ -1,39 +1,57 @@
-import Image from "next/image";
-import { Button } from "../ui/button";
-import Link from "next/link";
+"use client";
 
-const SocialAuthForm = async () => {
+import { loginWithGithub, loginWithGoogle } from "@/actions/auth";
+import Image from "next/image";
+import { useActionState } from "react";
+import LoadingButton from "../ui/LoadingButton";
+
+const SocialAuthForm = () => {
+  const [, githubLogin, isPendingGithub] = useActionState(
+    loginWithGithub,
+    null,
+  );
+  const [, googleLogin, isPendingGoogle] = useActionState(
+    loginWithGoogle,
+    null,
+  );
+
   return (
     <div className="mt-10 flex flex-wrap gap-2.5">
-      <Button
-        render={<Link href="/api/auth/login/github" className="flex-1" />}
-        type="submit"
-        className="background-dark400_light900 body-medium text-dark200_light800 rounded-2 min-h-12 w-full border-none px-4 py-3.5"
-      >
-        <Image
-          src="/icons/github.svg"
-          alt="GitHub Logo"
-          width={20}
-          height={20}
-          className="invert-colors mr-2.5 object-contain"
-        />
-        <span>Sign In With GitHub</span>
-      </Button>
+      <form action={githubLogin} className="flex-1">
+        <LoadingButton
+          isLoading={isPendingGithub}
+          disabled={isPendingGoogle}
+          type="submit"
+          className="background-dark400_light900 body-medium text-dark200_light800 rounded-2 min-h-12 w-full flex-1 border-none px-4 py-3.5"
+        >
+          <Image
+            src="/icons/github.svg"
+            alt="GitHub Logo"
+            width={20}
+            height={20}
+            className="invert-colors mr-2.5 object-contain"
+          />
+          <span>Sign In With GitHub</span>
+        </LoadingButton>
+      </form>
 
-      <Button
-        render={<Link href="/api/auth/login/google" className="flex-1" />}
-        type="submit"
-        className="background-dark400_light900 body-medium text-dark200_light800 rounded-2 min-h-12 w-full flex-1 border-none px-4 py-3.5"
-      >
-        <Image
-          src="/icons/google.svg"
-          alt="Google Logo"
-          width={20}
-          height={20}
-          className="mr-2.5 object-contain"
-        />
-        <span>Sign In With Google</span>
-      </Button>
+      <form action={googleLogin} className="flex-1">
+        <LoadingButton
+          isLoading={isPendingGoogle}
+          disabled={isPendingGithub}
+          type="submit"
+          className="background-dark400_light900 body-medium text-dark200_light800 rounded-2 min-h-12 w-full flex-1 border-none px-4 py-3.5"
+        >
+          <Image
+            src="/icons/google.svg"
+            alt="Google Logo"
+            width={20}
+            height={20}
+            className="mr-2.5 object-contain"
+          />
+          <span>Sign In With Google</span>
+        </LoadingButton>
+      </form>
     </div>
   );
 };

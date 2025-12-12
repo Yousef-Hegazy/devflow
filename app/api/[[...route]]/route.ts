@@ -4,7 +4,6 @@ import { HTTPException } from "hono/http-exception";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { handle } from "hono/vercel";
 import { AppwriteException } from "node-appwrite";
-import auth from "./auth";
 
 const app = new Hono().basePath("/api");
 
@@ -31,12 +30,11 @@ app.onError((err, c) => {
 })
 
 
-const routes = app.route("/auth", auth);
 
 
-export type AppType = typeof routes;
+export type AppType = typeof app;
 
-export const GET = handle(routes);
-export const POST = handle(routes);
-export const PUT = handle(routes);
-export const DELETE = handle(routes);
+export const GET = handle(app);
+export const POST = handle(app);
+export const PUT = handle(app);
+export const DELETE = handle(app);

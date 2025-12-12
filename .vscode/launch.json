@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Run next",
+            "runtimeExecutable": "next",
+            "cwd": "${workspaceFolder}",
+            "args": ["dev"]
+        }
+    ]
+}
