@@ -1,9 +1,109 @@
+import QuestionCard from "@/components/cards/QuestionCard";
+import DataRenderer from "@/components/DataRenderer";
 import HomeFilter from "@/components/filters/HomeFilter";
 import LocalSearch from "@/components/search/LocalSearch";
 import { Button } from "@/components/ui/button";
+import { createAdminClient } from "@/lib/appwrite/config";
+import { Question } from "@/lib/appwrite/types/appwrite";
+import { DEFAULT_CACHE_DURATION, HomeFilterType } from "@/lib/constants";
+import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
+import { appwriteConfig } from "@/lib/constants/server";
+import { EMPTY_QUESTION } from "@/lib/constants/states";
+import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
+import { Query } from "node-appwrite";
 
-export default async function Home() {
+interface Props {
+  searchParams: Promise<{
+    q?: string;
+    filter?: HomeFilterType;
+  }>;
+}
+
+const searchQuestions = async ({
+  page = 1,
+  pageSize = 10,
+  query = "",
+  filter = "all",
+}: {
+  page: number;
+  pageSize: number;
+  query?: string;
+  filter?: HomeFilterType;
+}) => {
+  "use cache";
+
+  cacheLife({
+    revalidate: DEFAULT_CACHE_DURATION,
+  });
+
+  cacheTag(
+    CACHE_KEYS.QUESTIONS_LIST,
+    String(page),
+    String(pageSize),
+    query,
+    filter,
+  );
+
+  try {
+    const { database } = await createAdminClient();
+
+    const queries = [
+      Query.limit(pageSize),
+      Query.offset((page - 1) * pageSize),
+      Query.select([
+        "*",
+        "author.name",
+        "author.image",
+        "tags.*",
+        "tags.tag.title",
+      ]),
+    ];
+
+    switch (filter) {
+      case "recommended":
+        return { total: 0, rows: [] };
+      case "popular":
+        queries.push(Query.orderDesc("upvotes"));
+        break;
+      case "unanswered":
+        queries.push(Query.equal("answersCount", 0));
+        break;
+      default:
+        queries.push(Query.orderDesc("$createdAt"));
+        break;
+    }
+
+    if (query) {
+      queries.push(Query.search("title", query));
+    }
+
+    const res = await database.listRows<Question>({
+      databaseId: appwriteConfig.databaseId,
+      tableId: appwriteConfig.questionsTableId,
+      queries,
+    });
+
+    return res;
+  } catch (error) {
+    return {
+      total: 0,
+      rows: [],
+      error: (error as Error)?.message,
+    };
+  }
+};
+
+export default async function Home({ searchParams }: Props) {
+  const { q, filter } = await searchParams;
+
+  const questions = await searchQuestions({
+    page: 1,
+    pageSize: 10,
+    query: q,
+    filter,
+  });
+
   return (
     <>
       <section className="flex w-full flex-col-reverse justify-between gap-4 sm:flex-row sm:items-center">
@@ -11,7 +111,7 @@ export default async function Home() {
 
         <Button
           render={<Link href="/ask-question" />}
-          className="primary-gradient! text-light-900! min-h-[46px]! border-0! px-4! py-3!"
+          className="primary-gradient! text-light-900! min-h-11.5! border-0! px-4! py-3!"
         >
           Ask a Question
         </Button>
@@ -20,11 +120,37 @@ export default async function Home() {
         <LocalSearch placeholder="Search Questions..." />
       </section>
       <HomeFilter />
-      <div className="mt-10 flex w-full flex-col gap-6">
-        <p>Question Card 1</p>
-        <p>Question Card 1</p>
-        <p>Question Card 1</p>
-        <p>Question Card 1</p>
+      <div className="mt-5 flex w-full flex-col gap-6">
+        {/* {"error" in questions ? (
+          <div className="mt-10 flex w-full items-center justify-center">
+            <p className="text-dark400_light700">
+              {questions.error || "Failed to fetch Questions"}
+            </p>
+          </div>
+        ) : questions.total > 0 ? (
+          questions.rows.map((question) => (
+            <QuestionCard key={question.$id} question={question} />
+          ))
+        ) : (
+          <div className="mt-10 flex w-full items-center justify-center">
+            <p className="text-dark400_light700">No questions found.</p>
+          </div>
+        )} */}
+        <DataRenderer
+          success={!("error" in questions)}
+          error={
+            "error" in questions ? { message: questions.error } : undefined
+          }
+          data={"error" in questions ? [] : questions.rows}
+          empty={EMPTY_QUESTION}
+          render={(data) => (
+            <>
+              {data.map((question) => (
+                <QuestionCard key={question.$id} question={question} />
+              ))}
+            </>
+          )}
+        />
       </div>
     </>
   );

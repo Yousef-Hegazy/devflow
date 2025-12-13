@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import "server-only";
 import { createSessionClient } from "../appwrite/config";
 import { AppUser } from "../appwrite/types/appwrite";
+import { DEFAULT_CACHE_DURATION } from "../constants";
 import { CACHE_KEYS } from "../constants/cacheKeys";
 import { appwriteConfig } from "../constants/server";
 
@@ -16,7 +17,7 @@ export async function getCurrentUser() {
     "use cache: private";
 
     cacheTag(CACHE_KEYS.CURRENT_USER);
-    cacheLife({ revalidate: 300 /* 5 minutes */ });
+    cacheLife({ revalidate: DEFAULT_CACHE_DURATION });
 
     try {
         const { account, database } = await createSessionClient();

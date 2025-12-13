@@ -46,7 +46,7 @@ const QuestionCard = ({
           imgUrl={author.image || "/icons/avatar.svg"}
           alt={author.name}
           value={author.name}
-          title={`• ${timeAgo} asked  ago`}
+          title={`• asked ${timeAgo}`}
           href={`/profile/${author.$id}`}
           classNames={{
             text: "body-medium text-dark400_light700",

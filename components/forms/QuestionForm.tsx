@@ -1,7 +1,7 @@
 "use client";
 
 import { Question } from "@/lib/appwrite/types/appwrite";
-import { useCreateQuestion } from "@/lib/queries/questions";
+import { useCreateQuestion, useUpdateQuestion } from "@/lib/queries/questions";
 import {
   AskQuestionSchema,
   AskQuestionSchemaType,
@@ -36,8 +36,17 @@ const QuestionForm = ({ question, userId }: Props) => {
   const { mutate: askQuestion, isPending: isCreatingQuestion } =
     useCreateQuestion();
 
+  const { mutate: updateQuestion, isPending: isUpdatingQuestion } =
+    useUpdateQuestion();
+
   const onSubmit = (data: AskQuestionSchemaType) =>
-    askQuestion({ userId, question: data });
+    question?.$id
+      ? updateQuestion({
+          userId,
+          questionId: question.$id,
+          question: data,
+        })
+      : askQuestion({ userId, question: data });
 
   function handleInputKeyDown(
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -171,22 +180,16 @@ const QuestionForm = ({ question, userId }: Props) => {
           </Field>
         )}
       />
-      {/* 
-      <ControlledField
-        control={control}
-        name="tags"
-        description="Add up to 3 tags to describe what your question is about"
-        placeholder="e.g. javascript, react, web-development"
-      /> */}
+   
 
       <div className="mt-16 flex justify-end">
         <LoadingButton
-          isLoading={isCreatingQuestion}
+          isLoading={isCreatingQuestion || isUpdatingQuestion}
           type="submit"
           className="primary-gradient text-light-900 w-fit border-0 py-4"
           size="xl"
         >
-          Ask Question
+          {question?.$id ? "Update Question" : "Ask Question"}
         </LoadingButton>
       </div>
     </Form>

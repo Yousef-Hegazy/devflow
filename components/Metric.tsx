@@ -25,15 +25,15 @@ const MetricContent = ({
 }: Props) => {
   return (
     <>
-      <Image
+      <img
         src={imgUrl}
         alt={alt}
-        width={16}
-        height={16}
+        width={20}
+        height={20}
         className={cn("rounded-full object-contain", classNames?.image)}
       />
 
-      <p className={cn("flex items-center gap-1", classNames?.text)}>{value}</p>
+      <p className={cn("flex items-center gap-1", classNames?.text)}>{isAuthor ? value.toString().split(" ")[0] :value}</p>
 
       <span
         className={cn("small-regular line-clamp-1", {

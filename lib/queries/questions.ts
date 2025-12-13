@@ -1,8 +1,8 @@
-import { createQuestion } from "@/actions/questions";
+import { createQuestion, updateQuestion } from "@/actions/questions";
 import { toastManager } from "@/components/ui/toast";
 import { useMutation } from "@tanstack/react-query";
-import { AskQuestionSchemaType } from "../validators/questionSchemas";
 import { useRouter } from "next/navigation";
+import { AskQuestionSchemaType } from "../validators/questionSchemas";
 
 export function useCreateQuestion() {
     const router = useRouter();
@@ -23,6 +23,32 @@ export function useCreateQuestion() {
             toastManager.add({
                 title: "Failed to Create Question",
                 description: error.message || "An error occurred while creating the question.",
+                type: "error",
+            })
+        }
+    })
+}
+
+
+export function useUpdateQuestion() {
+    const router = useRouter();
+
+    return useMutation({
+        mutationFn: async ({ userId, questionId, question }: { userId: string, questionId: string, question: AskQuestionSchemaType }) => updateQuestion(userId, questionId, question),
+        onSuccess: (questionId) => {
+            toastManager.add({
+                title: "Question Updated",
+                description: "Your question has been updated successfully.",
+                type: "success",
+            });
+
+            router.push(`/questions/${questionId}`);
+        },
+        onError: (error) => {
+            console.log({ error })
+            toastManager.add({
+                title: "Failed to Update Question",
+                description: error.message || "An error occurred while updating the question.",
                 type: "error",
             })
         }

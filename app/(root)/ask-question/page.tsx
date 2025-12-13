@@ -1,12 +1,12 @@
 import QuestionForm from "@/components/forms/QuestionForm";
 import { getCurrentUser } from "@/lib/server";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 
 const AskQuestion = async () => {
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect("/sign-in");
+    redirect("/sign-in", RedirectType.replace);
   }
 
   return (

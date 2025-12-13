@@ -64,7 +64,7 @@ const RightSidebar = () => {
           {topQuestions.map((q) => (
             <Link
               key={q.$id}
-              href={`/question/${q.$id}`}
+              href={`/questions/${q.$id}`}
               className="flex cursor-pointer items-center justify-between gap-7"
             >
               <p className="body-medium text-dark500_light700">{q.title}</p>
