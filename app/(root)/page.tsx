@@ -9,6 +9,7 @@ import { DEFAULT_CACHE_DURATION, HomeFilterType } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
 import { EMPTY_QUESTION } from "@/lib/constants/states";
+import handleError from "@/lib/errors";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { Query } from "node-appwrite";
@@ -85,11 +86,12 @@ const searchQuestions = async ({
     });
 
     return res;
-  } catch (error) {
+  } catch (e) {
+    const error = handleError(e);
     return {
       total: 0,
       rows: [],
-      error: (error as Error)?.message,
+      error: error.message,
     };
   }
 };
@@ -121,21 +123,6 @@ export default async function Home({ searchParams }: Props) {
       </section>
       <HomeFilter />
       <div className="mt-5 flex w-full flex-col gap-6">
-        {/* {"error" in questions ? (
-          <div className="mt-10 flex w-full items-center justify-center">
-            <p className="text-dark400_light700">
-              {questions.error || "Failed to fetch Questions"}
-            </p>
-          </div>
-        ) : questions.total > 0 ? (
-          questions.rows.map((question) => (
-            <QuestionCard key={question.$id} question={question} />
-          ))
-        ) : (
-          <div className="mt-10 flex w-full items-center justify-center">
-            <p className="text-dark400_light700">No questions found.</p>
-          </div>
-        )} */}
         <DataRenderer
           success={!("error" in questions)}
           error={

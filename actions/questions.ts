@@ -103,6 +103,7 @@ export async function createQuestion(userId: string, data: AskQuestionSchemaType
         });
 
         updateTag(CACHE_KEYS.QUESTIONS_LIST);
+        updateTag(CACHE_KEYS.QUESTION_DETAILS);
 
         return questionId;
 
@@ -233,6 +234,7 @@ export async function updateQuestion(userId: string, questionId: string, data: A
         });
 
         updateTag(CACHE_KEYS.QUESTIONS_LIST);
+        updateTag(CACHE_KEYS.QUESTION_DETAILS);
 
         return questionId;
 
