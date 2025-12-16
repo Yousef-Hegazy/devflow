@@ -62,7 +62,9 @@ const QuestionCard = ({
             title=" Votes"
             classNames={{
               text: "small-medium text-dark400_light800",
+              title: "max-sm:hidden"
             }}
+
           />
 
           <Metric
@@ -72,6 +74,7 @@ const QuestionCard = ({
             title=" Answers"
             classNames={{
               text: "small-medium text-dark400_light800",
+              title: "max-sm:hidden"
             }}
           />
 
@@ -82,6 +85,7 @@ const QuestionCard = ({
             title=" Views"
             classNames={{
               text: "small-medium text-dark400_light800",
+              title: "max-sm:hidden"
             }}
           />
         </div>

@@ -8,7 +8,7 @@ type Props = {
   classNames?: {
     avatar?: string;
     image?: string;
-    container?: string;
+    fallback?: string;
   };
 };
 
@@ -18,7 +18,7 @@ const UserAvatar = ({ user, classNames }: Props) => {
     .map((n) => n[0])
     .join("")
     .toUpperCase();
-    
+
   return (
     <Link href={`/profile/${user?.$id}`}>
       <Avatar className={cn("size-9", classNames?.avatar)}>
@@ -40,7 +40,12 @@ const UserAvatar = ({ user, classNames }: Props) => {
           //   }
         />
 
-        <AvatarFallback className="primary-gradient font-space-grotesk font-bold tracking-wider text-white">
+        <AvatarFallback
+          className={cn(
+            "primary-gradient font-space-grotesk font-bold tracking-wider text-white",
+            classNames?.fallback,
+          )}
+        >
           {initials}
         </AvatarFallback>
       </Avatar>

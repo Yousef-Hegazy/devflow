@@ -11,6 +11,7 @@ type Props = {
   classNames?: {
     text?: string;
     image?: string;
+    title?: string;
   };
   isAuthor?: boolean;
 };
@@ -33,15 +34,23 @@ const MetricContent = ({
         className={cn("rounded-full object-contain", classNames?.image)}
       />
 
-      <p className={cn("flex items-center gap-1", classNames?.text)}>{isAuthor ? value.toString().split(" ")[0] :value}</p>
+      <p className={cn("flex items-center gap-1", classNames?.text)}>
+        {isAuthor ? value.toString().split(" ")[0] : value}
+      </p>
 
-      <span
-        className={cn("small-regular line-clamp-1", {
-          "max-sm:hiden": isAuthor,
-        })}
-      >
-        {title}
-      </span>
+      {title ? (
+        <span
+          className={cn(
+            "small-regular line-clamp-1",
+            {
+              "max-sm:hiden": isAuthor,
+            },
+            classNames?.title,
+          )}
+        >
+          {title}
+        </span>
+      ) : null}
     </>
   );
 };
