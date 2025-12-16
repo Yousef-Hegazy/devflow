@@ -18,6 +18,8 @@ interface Props {
   searchParams: Promise<{
     q?: string;
     filter?: HomeFilterType;
+    page?: string;
+    pageSize?: string;
   }>;
 }
 
@@ -76,7 +78,7 @@ const searchQuestions = async ({
     }
 
     if (query) {
-      queries.push(Query.search("title", query));
+      queries.push(Query.contains("title", query));
     }
 
     const res = await database.listRows<Question>({
@@ -97,12 +99,12 @@ const searchQuestions = async ({
 };
 
 export default async function Home({ searchParams }: Props) {
-  const { q, filter } = await searchParams;
+  const { q, filter, page, pageSize } = await searchParams;
 
   const questions = await searchQuestions({
-    page: 1,
-    pageSize: 10,
-    query: q,
+    page: Number(page) || 1,
+    pageSize: Number(pageSize) || 10,
+    query: q?.toLowerCase() || "",
     filter,
   });
 

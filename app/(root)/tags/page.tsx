@@ -1,7 +1,6 @@
 import DataRenderer from "@/components/DataRenderer";
 import TagCard from "@/components/cards/TagCard";
 import LocalSearch from "@/components/search/LocalSearch";
-import { Button } from "@/components/ui/button";
 import { createAdminClient } from "@/lib/appwrite/config";
 import { Tag } from "@/lib/appwrite/types/appwrite";
 import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
@@ -10,7 +9,6 @@ import { appwriteConfig } from "@/lib/constants/server";
 import { EMPTY_TAGS } from "@/lib/constants/states";
 import handleError from "@/lib/errors";
 import { cacheLife, cacheTag } from "next/cache";
-import Link from "next/link";
 import { Query } from "node-appwrite";
 
 const getTags = async ({
@@ -40,7 +38,7 @@ const getTags = async ({
     ];
 
     if (query) {
-      queries.push(Query.search("title", query));
+      queries.push(Query.contains("title", query));
     }
 
     const res = await database.listRows<Tag>({
@@ -64,25 +62,35 @@ const getTags = async ({
 interface Props {
   searchParams: Promise<{
     q?: string;
+    page?: string;
+    pageSize?: string;
   }>;
 }
 
-export default async function TagsPage({searchParams}: Props) {
-  const { q } = await searchParams;
-  const tags = await getTags({ page: 1, pageSize: 50, query: q });
+export default async function TagsPage({ searchParams }: Props) {
+  const { q, page, pageSize } = await searchParams;
+  const tags = await getTags({
+    page: Number(page) || 1,
+    pageSize: Number(pageSize) || 50,
+    query: q?.toLowerCase() || "",
+  });
 
   return (
     <>
-      <section className="flex w-full flex-col-reverse justify-between gap-4 sm:flex-row sm:items-center">
-        <h1 className="h1-bold text-dark100_light900">All Tags ({tags.total > 99 ? "99+" : tags.total})</h1>
+      <h1 className="h1-bold text-dark100_light900">
+        Tags{" "}
+        {tags.total ? (
+          <>
+            •{" "}
+            <span className="primary-text-gradient">
+              {tags.total > 99 ? "99+" : tags.total}
+            </span>
+          </>
+        ) : (
+          ""
+        )}
+      </h1>
 
-        <Button
-          render={<Link href="/ask-question" />}
-          className="primary-gradient! text-light-900! min-h-11.5! border-0! px-4! py-3!"
-        >
-          Ask a Question
-        </Button>
-      </section>
       <section className="mt-11">
         <LocalSearch placeholder="Search Tags..." />
       </section>
@@ -98,9 +106,10 @@ export default async function TagsPage({searchParams}: Props) {
               <TagCard
                 key={tag.$id}
                 $id={tag.$id}
-                name={tag.title}
+                name={tag.title.toLocaleLowerCase()}
                 questionsNo={tag.questionsCount}
-                showCount
+                showCount={false}
+                compact={false}
               />
             ))}
           </div>
