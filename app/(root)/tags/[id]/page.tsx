@@ -131,8 +131,10 @@ type Props = {
 };
 
 const TagDetailsPage = async ({ params, searchParams }: Props) => {
-  const { id } = await params;
-  const { q, page, pageSize } = await searchParams;
+  const [{ id }, { q, page, pageSize }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
 
   const [tag, tagQuestions] = await Promise.all([
     getTagDetails(id),
