@@ -56,11 +56,11 @@ const tags = [
 
 const RightSidebar = () => {
   return (
-    <section className="custom-scrollbar background-light900_dark200 light-border overflw-y-auto shadow-light-300 sticky top-0 right-0 flex h-screen w-[350px] flex-col gap-6 border-l p-6 pt-36 max-xl:hidden dark:shadow-none">
+    <section className="custom-scrollbar background-light900_dark200 light-border overflw-y-auto shadow-light-300 sticky top-0 right-0 flex h-screen w-87.5 flex-col gap-6 border-l p-6 pt-36 max-xl:hidden dark:shadow-none">
       <div>
         <h3 className="h3-bold text-dark200_light900">Top Questions</h3>
 
-        <div className="mt-7 flex w-full flex-col gap-[30px]">
+        <div className="mt-7 flex w-full flex-col gap-7.5">
           {topQuestions.map((q) => (
             <Link
               key={q.$id}

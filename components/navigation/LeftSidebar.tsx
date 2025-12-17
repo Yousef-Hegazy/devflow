@@ -8,7 +8,7 @@ import NavLinks from "./navbar/NavLinks";
 
 const LeftSidebar = async ({ user }: { user: AppUser | null }) => {
   return (
-    <section className="custom-scrollbar background-light900_dark200 light-border shadow-light-300 sticky top-0 left-0 flex h-screen flex-col justify-between overflow-y-auto border-r p-6 pt-36 max-sm:hidden lg:w-[266px] dark:shadow-none">
+    <section className="custom-scrollbar background-light900_dark200 light-border shadow-light-300 sticky top-0 left-0 flex h-screen flex-col justify-between overflow-y-auto border-r p-6 pt-36 max-sm:hidden lg:w-66.5 dark:shadow-none">
       <div className="flex flex-1 flex-col gap-6">
         <NavLinks />
       </div>
@@ -31,7 +31,7 @@ const LeftSidebar = async ({ user }: { user: AppUser | null }) => {
             <Link href="/sign-in">
               <Button
                 render={<span />}
-                className="small-medium! lg:body-medium! bg-secondary! min-h-[41px]! w-full! rounded-lg border-0 py-3 shadow-transparent inset-shadow-transparent lg:px-4"
+                className="small-medium! lg:body-medium! bg-secondary! min-h-10.25! w-full! rounded-lg border-0 py-3 shadow-transparent inset-shadow-transparent lg:px-4"
               >
                 <Image
                   src="/icons/account.svg"
@@ -49,7 +49,7 @@ const LeftSidebar = async ({ user }: { user: AppUser | null }) => {
             <Link href="/sign-up">
               <Button
                 render={<span />}
-                className="small-medium! lg:body-medium! light-border-2! btn-tertiary! text-dark400_light900! min-h-[41px]! w-full! rounded-lg border py-3 shadow-transparent inset-shadow-transparent lg:px-4"
+                className="small-medium! lg:body-medium! light-border-2! btn-tertiary! text-dark400_light900! min-h-10.25! w-full! rounded-lg border py-3 shadow-transparent inset-shadow-transparent lg:px-4"
               >
                 <Image
                   src="/icons/sign-up.svg"

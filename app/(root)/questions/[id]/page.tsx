@@ -1,5 +1,6 @@
 import TagCard from "@/components/cards/TagCard";
 import DataRenderer from "@/components/DataRenderer";
+import PreviewMarkdown from "@/components/MarkdownEditor/PreviewMarkdown";
 import Metric from "@/components/Metric";
 import UserAvatar from "@/components/UserAvatar";
 import { createAdminClient } from "@/lib/appwrite/config";
@@ -127,9 +128,9 @@ const QuestionDetailsPage = async ({ params }: Props) => {
             />
           </div>
 
-          <p>Preview Content</p>
+          <PreviewMarkdown content={question.content} />
 
-          <div className="mt-8 flex-wrap gap-2">
+          <div className="mt-8 flex flex-wrap gap-2">
             {question.tags.map(({ tag }) => (
               <TagCard key={tag.$id} $id={tag.$id} name={tag.title} compact />
             ))}
