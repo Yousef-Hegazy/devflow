@@ -103,7 +103,6 @@ export async function createQuestion(userId: string, data: AskQuestionSchemaType
         });
 
         updateTag(CACHE_KEYS.QUESTIONS_LIST);
-        updateTag(CACHE_KEYS.QUESTION_DETAILS);
 
         return questionId;
 
@@ -234,7 +233,7 @@ export async function updateQuestion(userId: string, questionId: string, data: A
         });
 
         updateTag(CACHE_KEYS.QUESTIONS_LIST);
-        updateTag(CACHE_KEYS.QUESTION_DETAILS);
+        updateTag(CACHE_KEYS.QUESTION_DETAILS + questionId);
 
         return questionId;
 
@@ -247,4 +246,20 @@ export async function updateQuestion(userId: string, questionId: string, data: A
         throw error;
     }
 
+}
+
+export async function increaseViewCount(questionId: string) {
+
+    const { database } = await createAdminClient();
+
+    const question = await database.incrementRowColumn({
+        databaseId: appwriteConfig.databaseId,
+        tableId: appwriteConfig.questionsTableId,
+        rowId: questionId,
+        column: "views",
+    });
+
+    updateTag(CACHE_KEYS.QUESTION_VIEWS + questionId);
+
+    return question;
 }

@@ -65,7 +65,7 @@ const NonCompactTag = ({ name, $id, questionsNo }: Props) => {
           <i className={cn(iconClass, "text-2xl")} aria-hidden="true" />
         </div>
 
-        <p className="small-regular text-dark500_light700 light-clamp-3 mt-5 w-full">
+        <p className="small-regular text-dark500_light700 line-clamp-3 mt-5 w-full">
           {iconDesc}
         </p>
 

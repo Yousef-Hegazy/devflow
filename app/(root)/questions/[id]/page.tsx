@@ -1,5 +1,6 @@
 import TagCard from "@/components/cards/TagCard";
 import DataRenderer from "@/components/DataRenderer";
+import IncrementQuestionView from "@/components/IncrementQuestionView";
 import PreviewMarkdown from "@/components/MarkdownEditor/PreviewMarkdown";
 import Metric from "@/components/Metric";
 import UserAvatar from "@/components/UserAvatar";
@@ -29,7 +30,7 @@ const getQuestionDetails = async (id: string) => {
     revalidate: DEFAULT_CACHE_DURATION,
   });
 
-  cacheTag(CACHE_KEYS.QUESTIONS_LIST, id);
+  cacheTag(CACHE_KEYS.QUESTION_DETAILS + id);
 
   try {
     const { database } = await createAdminClient();
@@ -56,9 +57,34 @@ const getQuestionDetails = async (id: string) => {
   }
 };
 
+const getQuestionViews = async (id: string) => {
+  "use cache";
+  cacheLife({
+    revalidate: DEFAULT_CACHE_DURATION,
+  });
+  cacheTag(CACHE_KEYS.QUESTION_VIEWS + id);
+
+  try {
+    const { database } = await createAdminClient();
+    const question = await database.getRow<Question>({
+      databaseId: appwriteConfig.databaseId,
+      tableId: appwriteConfig.questionsTableId,
+      rowId: id,
+      queries: [Query.select(["views"])],
+    });
+    return question.views;
+  } catch (error) {
+    handleError(error);
+    return 0;
+  }
+};
+
 const QuestionDetailsPage = async ({ params }: Props) => {
   const { id } = await params;
-  const question = await getQuestionDetails(id);
+  const [question, views] = await Promise.all([
+    getQuestionDetails(id),
+    getQuestionViews(id),
+  ]);
 
   return (
     <DataRenderer
@@ -68,6 +94,7 @@ const QuestionDetailsPage = async ({ params }: Props) => {
       success={!!question}
       render={([question]) => (
         <>
+          <IncrementQuestionView questionId={question.$id} />
           <div className="flex-start w-full flex-col">
             <div className="flex w-full flex-col-reverse justify-between">
               <div className="flex items-center justify-start gap-1">
@@ -120,7 +147,7 @@ const QuestionDetailsPage = async ({ params }: Props) => {
             <Metric
               imgUrl="/icons/eye.svg"
               alt="eye icon"
-              value={formatNumber(question.views)}
+              value={formatNumber(views)}
               title=""
               classNames={{
                 text: "small-regular text-dark400_light700",
