@@ -1,5 +1,6 @@
 import TagCard from "@/components/cards/TagCard";
 import DataRenderer from "@/components/DataRenderer";
+import AnswerForm from "@/components/forms/AnswerForm";
 import IncrementQuestionView from "@/components/IncrementQuestionView";
 import PreviewMarkdown from "@/components/MarkdownEditor/PreviewMarkdown";
 import Metric from "@/components/Metric";
@@ -162,6 +163,10 @@ const QuestionDetailsPage = async ({ params }: Props) => {
               <TagCard key={tag.$id} $id={tag.$id} name={tag.title} compact />
             ))}
           </div>
+
+          <section className="my-5 ">
+            <AnswerForm />
+          </section>
         </>
       )}
     />

@@ -23,3 +23,9 @@ export const AskQuestionSchema = z.object({
 });
 
 export type AskQuestionSchemaType = z.infer<typeof AskQuestionSchema>;
+
+export const AnswerSchema = z.object({
+    content: z.string().min(30, "Answer must be at least 30 characters long."),
+});
+
+export type AnswerSchemaType = z.infer<typeof AnswerSchema>;

@@ -101,9 +101,7 @@ cacheTag(CACHE_KEYS.QUESTIONS_LIST, ...params);
 
 ### Error Handling
 - Appwrite errors use a small helper: `handleError` in `lib/errors.ts`.
-- `handleError(err)` returns either `{ redirectTo: '/sign-in' }` for 401 Appwrite errors, or `{ error: Error }` for other cases.
-- Callers should perform the redirect using their platform (e.g., `c.redirect('/sign-in')` in Hono or `redirect('/sign-in')` in Next server code).
-- Example (Hono API): the `/app/api` handler uses `handleError` to decide between `c.redirect()` and returning a JSON error.
+- `handleError(err)` redirects in case of 401 and returns Error, and is only uses on server.
 
 ## Key Files to Reference
 
