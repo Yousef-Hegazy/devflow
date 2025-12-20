@@ -1,10 +1,10 @@
 "use server";
 
-import { createAdminClient } from "@/lib/appwrite/config";
+import { createAdminClient, createSessionClient } from "@/lib/appwrite/config";
 import { Question, Tag } from "@/lib/appwrite/types/appwrite";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
-import { AskQuestionSchema, AskQuestionSchemaType } from "@/lib/validators/questionSchemas";
+import { AnswerSchemaType, AskQuestionSchema, AskQuestionSchemaType } from "@/lib/validators/questionSchemas";
 import { updateTag } from "next/cache";
 import { ID, Permission, Query, Role } from "node-appwrite";
 
@@ -262,4 +262,66 @@ export async function increaseViewCount(questionId: string) {
     updateTag(CACHE_KEYS.QUESTION_VIEWS + questionId);
 
     return question;
+}
+
+export async function answerQuestion(answer: AnswerSchemaType, questionId: string) {
+    const { account } = await createSessionClient();
+    const { database } = await createAdminClient();
+
+    const tx = await database.createTransaction();
+
+    try {
+        const user = await account.get();
+
+        const answerId = ID.unique();
+
+        await database.createOperations({
+            transactionId: tx.$id,
+            operations: [
+                {
+                    action: "create",
+                    databaseId: appwriteConfig.databaseId,
+                    tableId: appwriteConfig.answersTableId,
+                    rowId: answerId,
+                    data: {
+                        content: answer.content,
+                        author: user.$id,
+                        question: questionId,
+                        $permissions: [
+                            Permission.read(Role.any()),
+                            Permission.write(Role.user(user.$id)),
+                            Permission.update(Role.user(user.$id)),
+                            Permission.delete(Role.user(user.$id)),
+                        ]
+                    }
+                },
+                {
+                    action: "increment",
+                    databaseId: appwriteConfig.databaseId,
+                    tableId: appwriteConfig.questionsTableId,
+                    rowId: questionId,
+                    data: {
+                        column: "answersCount",
+                        value: 1,
+                    }
+                }
+            ]
+        });
+
+        await database.updateTransaction({
+            transactionId: tx.$id,
+            commit: true,
+        });
+
+        updateTag(CACHE_KEYS.QUESTION_ANSWERS + questionId);
+
+        return answerId;
+
+    } catch (error) {
+        await database.updateTransaction({
+            transactionId: tx.$id,
+            rollback: true,
+        });
+        throw error;
+    }
 }

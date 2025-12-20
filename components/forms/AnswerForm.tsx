@@ -1,5 +1,6 @@
 "use client";
 
+import { useAnswerQuestion } from "@/lib/queries/questions";
 import {
   AnswerSchema,
   AnswerSchemaType,
@@ -14,10 +15,11 @@ import LoadingButton from "../ui/LoadingButton";
 
 type Props = {
   initialContent?: string;
+  questionId: string;
 };
 
-const AnswerForm = ({ initialContent = "" }: Props) => {
-  const { control, handleSubmit, formState } = useForm<AnswerSchemaType>({
+const AnswerForm = ({ initialContent = "", questionId }: Props) => {
+  const { control, handleSubmit } = useForm<AnswerSchemaType>({
     resolver: zodResolver(AnswerSchema),
     mode: "all",
     defaultValues: {
@@ -25,9 +27,11 @@ const AnswerForm = ({ initialContent = "" }: Props) => {
     },
   });
 
-  const submit = async (data: AnswerSchemaType) => {
-    console.log("Answer submitted:", data);
-  };
+  const { mutate: answerQuestion, isPending: isAnswering } =
+    useAnswerQuestion();
+
+  const submit = (data: AnswerSchemaType) =>
+    answerQuestion({ answer: data, questionId });
 
   return (
     <Form onSubmit={handleSubmit(submit)} className="gap-6">
@@ -71,7 +75,7 @@ const AnswerForm = ({ initialContent = "" }: Props) => {
 
       <div className="flex justify-end">
         <LoadingButton
-          isLoading={formState.isSubmitting}
+          isLoading={isAnswering}
           type="submit"
           className="primary-gradient text-light-900 w-fit border-0 py-3"
           size="lg"

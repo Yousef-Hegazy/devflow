@@ -1,8 +1,8 @@
-import { createQuestion, updateQuestion } from "@/actions/questions";
+import { answerQuestion, createQuestion, updateQuestion } from "@/actions/questions";
 import { toastManager } from "@/components/ui/toast";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { AskQuestionSchemaType } from "../validators/questionSchemas";
+import { AnswerSchemaType, AskQuestionSchemaType } from "../validators/questionSchemas";
 
 export function useCreateQuestion() {
     const router = useRouter();
@@ -29,7 +29,6 @@ export function useCreateQuestion() {
     })
 }
 
-
 export function useUpdateQuestion() {
     const router = useRouter();
 
@@ -54,3 +53,23 @@ export function useUpdateQuestion() {
         }
     })
 }
+
+export function useAnswerQuestion() {
+    return useMutation({
+        mutationFn: ({ answer, questionId }: { answer: AnswerSchemaType, questionId: string }) => answerQuestion(answer, questionId),
+        onSuccess: () => {
+            toastManager.add({
+                title: "Answer Submitted",
+                description: "Your answer has been submitted successfully.",
+                type: "success",
+            });
+        },
+        onError: (error) => {
+            toastManager.add({
+                title: "Failed to Submit Answer",
+                description: error.message || "An error occurred while submitting your answer.",
+                type: "error",
+            })
+        }
+    })
+}    

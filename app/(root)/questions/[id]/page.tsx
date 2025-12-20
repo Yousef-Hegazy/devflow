@@ -164,8 +164,8 @@ const QuestionDetailsPage = async ({ params }: Props) => {
             ))}
           </div>
 
-          <section className="my-5 ">
-            <AnswerForm />
+          <section className="my-5">
+            <AnswerForm questionId={question.$id} />
           </section>
         </>
       )}
