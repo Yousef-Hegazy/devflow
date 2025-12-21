@@ -1,13 +1,11 @@
 "use server";
 
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/config";
-import { Answer, Question, Tag } from "@/lib/appwrite/types/appwrite";
-import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
+import { Question, Tag } from "@/lib/appwrite/types/appwrite";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
-import handleError from "@/lib/errors";
 import { AnswerSchemaType, AskQuestionSchema, AskQuestionSchemaType } from "@/lib/validators/questionSchemas";
-import { cacheLife, cacheTag, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { ID, Permission, Query, Role } from "node-appwrite";
 
 export async function createQuestion(userId: string, data: AskQuestionSchemaType) {
