@@ -3,19 +3,21 @@ import { toastManager } from "@/components/ui/toast";
 import useAuthStore from "@/stores/authStore";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { SignUpSchemaType } from "../validators/authSchemas";
+import { logger } from "@/pino";
 
 export function useSignUp() {
     const router = useRouter();
     const setUser = useAuthStore((state) => state.setUser);
 
     return useMutation({
-        mutationFn: signUp,
+        mutationFn: (data: SignUpSchemaType) => signUp(data),
         onSuccess: (user) => {
             setUser(user);
             router.push("/");
         },
         onError: (error) => {
-            console.log(error);
+            logger.info({ error });
             toastManager.add({
                 title: "Registration Failed",
                 description: error.message || "An error occurred during registration.",

@@ -4,16 +4,19 @@ import AnswerForm from "@/components/forms/AnswerForm";
 import IncrementQuestionView from "@/components/IncrementQuestionView";
 import PreviewMarkdown from "@/components/MarkdownEditor/PreviewMarkdown";
 import Metric from "@/components/Metric";
+import { Button } from "@/components/ui/button";
 import UserAvatar from "@/components/UserAvatar";
 import { createAdminClient } from "@/lib/appwrite/config";
-import { Question } from "@/lib/appwrite/types/appwrite";
+import { Answer, Question } from "@/lib/appwrite/types/appwrite";
 import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
 import { EMPTY_QUESTION } from "@/lib/constants/states";
 import handleError from "@/lib/errors";
 import { getTimeAgo } from "@/lib/helpers/date";
+import { getCurrentUser } from "@/lib/server";
 import { formatNumber } from "@/lib/utils";
+import { logger } from "@/pino";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { Query } from "node-appwrite";
@@ -80,9 +83,77 @@ const getQuestionViews = async (id: string) => {
   }
 };
 
+export async function getAnswers({
+  questionId,
+  page = 1,
+  pageSize = 10,
+  filter = "default",
+}: {
+  questionId: string;
+  page?: number;
+  pageSize?: number;
+  filter?: "latest" | "oldest" | "popular" | "default";
+}) {
+  "use cache";
+
+  cacheLife({
+    revalidate: DEFAULT_CACHE_DURATION,
+  });
+
+  cacheTag(
+    CACHE_KEYS.QUESTION_ANSWERS + questionId,
+    String(page),
+    String(pageSize),
+    filter,
+  );
+
+  try {
+    const { database } = await createAdminClient();
+
+    const queries = [
+      Query.limit(pageSize),
+      Query.offset((page - 1) * pageSize),
+      Query.select(["*", "author.name", "author.image"]),
+      Query.equal("question", questionId)
+    ];
+
+    switch (filter) {
+      case "latest":
+        queries.push(Query.orderDesc("$createdAt"));
+        break;
+      case "oldest":
+        queries.push(Query.orderAsc("$createdAt"));
+        break;
+      case "popular":
+        queries.push(Query.orderDesc("upvotes"));
+        break;
+      default:
+        queries.push(Query.orderDesc("$createdAt"));
+    }
+
+    const res = await database.listRows<Answer>({
+      databaseId: appwriteConfig.databaseId,
+      tableId: appwriteConfig.answersTableId,
+      queries,
+    });
+
+    return res;
+  } catch (e) {
+    const error = handleError(e);
+    logger.error(JSON.stringify(error));
+
+    return {
+      total: 0,
+      rows: [],
+      error: error.message,
+    };
+  }
+}
+
 const QuestionDetailsPage = async ({ params }: Props) => {
   const { id } = await params;
-  const [question, views] = await Promise.all([
+  const [user, question, views] = await Promise.all([
+    getCurrentUser(),
     getQuestionDetails(id),
     getQuestionViews(id),
   ]);
@@ -115,7 +186,21 @@ const QuestionDetailsPage = async ({ params }: Props) => {
               </div>
 
               <div className="flex justify-end">
-                <p>Votes</p>
+                {user?.$id === question.author.$id ? (
+                  <Button
+                    className="primary-gradient text-light-900 w-fit border-0 py-3"
+                    render={
+                      <Link
+                        href={{
+                          pathname: `${question.$id}/update`,
+                        }}
+                      />
+                    }
+                  >
+                    Update Question
+                  </Button>
+                ) : null}
+                {/* <p>Votes</p> */}
               </div>
             </div>
 

@@ -3,6 +3,7 @@ import { toastManager } from "@/components/ui/toast";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { AnswerSchemaType, AskQuestionSchemaType } from "../validators/questionSchemas";
+import { logger } from "@/pino";
 
 export function useCreateQuestion() {
     const router = useRouter();
@@ -19,7 +20,7 @@ export function useCreateQuestion() {
             router.push(`/questions/${questionId}`);
         },
         onError: (error) => {
-            console.log({ error })
+            logger.info({ error })
             toastManager.add({
                 title: "Failed to Create Question",
                 description: error.message || "An error occurred while creating the question.",
@@ -44,7 +45,7 @@ export function useUpdateQuestion() {
             router.push(`/questions/${questionId}`);
         },
         onError: (error) => {
-            console.log({ error })
+            logger.info({ error })
             toastManager.add({
                 title: "Failed to Update Question",
                 description: error.message || "An error occurred while updating the question.",

@@ -3,13 +3,14 @@
 import { createAdminClient, createClient } from "@/lib/appwrite/config";
 import { AppUser } from "@/lib/appwrite/types/appwrite";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
+import { appwriteConfig } from "@/lib/constants/server";
 import { getAppwriteInitialsAvatarUrl } from "@/lib/server";
 import { SignInSchemaType, SignUpSchemaType } from "@/lib/validators/authSchemas";
 import { updateTag } from "next/cache";
 import { redirect, RedirectType } from "next/navigation";
 import { ID, OAuthProvider, Permission, Query, Role } from "node-appwrite";
 import { deleteCookie, getCookie, setCookie } from "./cookies";
-import { appwriteConfig } from "@/lib/constants/server";
+import { logger } from "@/pino";
 
 export async function loginWithGoogle() {
     const { account } = await createAdminClient();
@@ -25,14 +26,22 @@ export async function loginWithGoogle() {
 }
 
 export async function loginWithGithub() {
-    const { account } = await createAdminClient();
+    let redirectUrl = "";
+    try {
+        const { account } = await createAdminClient();
 
-    const redirectUrl = await account.createOAuth2Token({
-        provider: OAuthProvider.Github,
-        success: "http://localhost:3000/oauth-success?provider=github",
-        failure: "http://localhost:3000/sign-in",
-        scopes: ["read:user", "user:email"]
-    });
+        redirectUrl = await account.createOAuth2Token({
+            provider: OAuthProvider.Github,
+            success: "http://localhost:3000/oauth-success?provider=github",
+            failure: "http://localhost:3000/sign-in",
+            scopes: ["read:user", "user:email"]
+        });
+
+        logger.info({ redirectUrl })
+    } catch (error) {
+        redirectUrl = "http://localhost:3000/sign-in";
+        logger.error({ error });
+    }
 
     redirect(redirectUrl);
 }
@@ -40,6 +49,7 @@ export async function loginWithGithub() {
 export async function handleOAuthSuccess(userId: string, secret: string, provider: string) {
     let success = false;
 
+    logger.info({ userId, secret, provider });
     if (!userId || !secret || !provider) {
         redirect("/sign-in", RedirectType.replace);
     }
@@ -82,7 +92,7 @@ export async function handleOAuthSuccess(userId: string, secret: string, provide
                 });
             }
         } catch (error) {
-            console.log("error fetching user row, creating new one...", error);
+            logger.error({ error, message: "error fetching user row, creating new one..." });
             await database.createRow({
                 databaseId: appwriteConfig.databaseId,
                 tableId: appwriteConfig.usersTableId,
@@ -114,7 +124,8 @@ export async function handleOAuthSuccess(userId: string, secret: string, provide
         updateTag(CACHE_KEYS.CURRENT_USER);
         success = true;
 
-    } catch {
+    } catch (error) {
+        logger.error({ error, message: (error as Error).cause });
         success = false;
     }
 
@@ -281,7 +292,7 @@ export async function logout() {
 
     } catch (error) {
         await deleteCookie(appwriteConfig.sessionName);
-        console.log(error);
+        logger.error({ error, message: "Error during logout" });
     }
 
     redirect("/sign-in", RedirectType.replace);
