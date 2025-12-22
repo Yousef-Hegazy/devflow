@@ -1,13 +1,17 @@
 "use server";
 
 import { createAdminClient, createSessionClient } from "@/lib/appwrite/config";
-import { Question, Tag } from "@/lib/appwrite/types/appwrite";
+import { Answer, Question, Tag } from "@/lib/appwrite/types/appwrite";
+import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
+import handleError from "@/lib/errors";
 import { AnswerSchemaType, AskQuestionSchema, AskQuestionSchemaType } from "@/lib/validators/questionSchemas";
-import { updateTag } from "next/cache";
+import { logger } from "@/pino";
+import { cacheLife, cacheTag, updateTag } from "next/cache";
 import { ID, Permission, Query, Role } from "node-appwrite";
 
+//#region createQuestion
 export async function createQuestion(userId: string, data: AskQuestionSchemaType) {
     const question = AskQuestionSchema.parse(data);
 
@@ -115,7 +119,9 @@ export async function createQuestion(userId: string, data: AskQuestionSchemaType
         throw error;
     }
 }
+//#endregion
 
+//#region updateQuestion
 export async function updateQuestion(userId: string, questionId: string, data: AskQuestionSchemaType) {
     const question = AskQuestionSchema.parse(data);
 
@@ -247,7 +253,9 @@ export async function updateQuestion(userId: string, questionId: string, data: A
     }
 
 }
+//#endregion
 
+// #region increaseViewCount
 export async function increaseViewCount(questionId: string) {
 
     const { database } = await createAdminClient();
@@ -263,7 +271,9 @@ export async function increaseViewCount(questionId: string) {
 
     return question;
 }
+//#endregion
 
+//#region answerQuestion
 export async function answerQuestion(answer: AnswerSchemaType, questionId: string) {
     const { account } = await createSessionClient();
     const { database } = await createAdminClient();
@@ -327,3 +337,133 @@ export async function answerQuestion(answer: AnswerSchemaType, questionId: strin
         throw error;
     }
 }
+//#endregion
+
+//#region getQuestionDetails
+export async function getQuestionDetails(id: string) {
+    "use cache";
+
+    cacheLife({
+        revalidate: DEFAULT_CACHE_DURATION,
+    });
+
+    cacheTag(CACHE_KEYS.QUESTION_DETAILS + id);
+
+    try {
+        const { database } = await createAdminClient();
+
+        const question = await database.getRow<Question>({
+            databaseId: appwriteConfig.databaseId,
+            tableId: appwriteConfig.questionsTableId,
+            rowId: id,
+            queries: [
+                Query.select([
+                    "*",
+                    "author.name",
+                    "author.image",
+                    "tags.*",
+                    "tags.tag.title",
+                ]),
+            ],
+        });
+
+        return question;
+    } catch (error) {
+        handleError(error);
+        return null;
+    }
+};
+//#endregion
+
+//#region getQuestionViews
+export async function getQuestionViews(id: string) {
+    "use cache";
+    cacheLife({
+        revalidate: DEFAULT_CACHE_DURATION,
+    });
+    cacheTag(CACHE_KEYS.QUESTION_VIEWS + id);
+
+    try {
+        const { database } = await createAdminClient();
+        const question = await database.getRow<Question>({
+            databaseId: appwriteConfig.databaseId,
+            tableId: appwriteConfig.questionsTableId,
+            rowId: id,
+            queries: [Query.select(["views"])],
+        });
+        return question.views;
+    } catch (error) {
+        handleError(error);
+        return 0;
+    }
+};
+//#endregion
+
+//#region getAnswers
+export async function getAnswers({
+    questionId,
+    page = 1,
+    pageSize = 10,
+    filter = "default",
+}: {
+    questionId: string;
+    page?: number;
+    pageSize?: number;
+    filter?: "latest" | "oldest" | "popular" | "default";
+}) {
+    "use cache";
+
+    cacheLife({
+        revalidate: DEFAULT_CACHE_DURATION,
+    });
+
+    cacheTag(
+        CACHE_KEYS.QUESTION_ANSWERS + questionId,
+        String(page),
+        String(pageSize),
+        filter,
+    );
+
+    try {
+        const { database } = await createAdminClient();
+
+        const queries = [
+            Query.limit(pageSize),
+            Query.offset((page - 1) * pageSize),
+            Query.select(["*", "author.name", "author.image"]),
+            Query.equal("question", questionId),
+        ];
+
+        switch (filter) {
+            case "latest":
+                queries.push(Query.orderDesc("$createdAt"));
+                break;
+            case "oldest":
+                queries.push(Query.orderAsc("$createdAt"));
+                break;
+            case "popular":
+                queries.push(Query.orderDesc("upvotes"));
+                break;
+            default:
+                queries.push(Query.orderDesc("$createdAt"));
+        }
+
+        const res = await database.listRows<Answer>({
+            databaseId: appwriteConfig.databaseId,
+            tableId: appwriteConfig.answersTableId,
+            queries,
+        });
+
+        return res;
+    } catch (e) {
+        const error = handleError(e);
+        logger.error(JSON.stringify(error));
+
+        return {
+            total: 0,
+            rows: [],
+            error: error.message,
+        };
+    }
+}
+//#endregion

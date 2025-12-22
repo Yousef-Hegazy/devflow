@@ -1,3 +1,8 @@
+import {
+  getAnswers,
+  getQuestionDetails,
+  getQuestionViews,
+} from "@/actions/questions";
 import TagCard from "@/components/cards/TagCard";
 import DataRenderer from "@/components/DataRenderer";
 import AnswerForm from "@/components/forms/AnswerForm";
@@ -6,20 +11,12 @@ import PreviewMarkdown from "@/components/MarkdownEditor/PreviewMarkdown";
 import Metric from "@/components/Metric";
 import { Button } from "@/components/ui/button";
 import UserAvatar from "@/components/UserAvatar";
-import { createAdminClient } from "@/lib/appwrite/config";
-import { Answer, Question } from "@/lib/appwrite/types/appwrite";
-import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
-import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
-import { appwriteConfig } from "@/lib/constants/server";
-import { EMPTY_QUESTION } from "@/lib/constants/states";
-import handleError from "@/lib/errors";
+import { EMPTY_ANSWERS, EMPTY_QUESTION } from "@/lib/constants/states";
 import { getTimeAgo } from "@/lib/helpers/date";
 import { getCurrentUser } from "@/lib/server";
 import { formatNumber } from "@/lib/utils";
-import { logger } from "@/pino";
-import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
-import { Query } from "node-appwrite";
+import AnswersList from "./AnswersList";
 
 type Props = {
   params: Promise<{
@@ -27,135 +24,13 @@ type Props = {
   }>;
 };
 
-const getQuestionDetails = async (id: string) => {
-  "use cache";
-
-  cacheLife({
-    revalidate: DEFAULT_CACHE_DURATION,
-  });
-
-  cacheTag(CACHE_KEYS.QUESTION_DETAILS + id);
-
-  try {
-    const { database } = await createAdminClient();
-
-    const question = await database.getRow<Question>({
-      databaseId: appwriteConfig.databaseId,
-      tableId: appwriteConfig.questionsTableId,
-      rowId: id,
-      queries: [
-        Query.select([
-          "*",
-          "author.name",
-          "author.image",
-          "tags.*",
-          "tags.tag.title",
-        ]),
-      ],
-    });
-
-    return question;
-  } catch (error) {
-    handleError(error);
-    return null;
-  }
-};
-
-const getQuestionViews = async (id: string) => {
-  "use cache";
-  cacheLife({
-    revalidate: DEFAULT_CACHE_DURATION,
-  });
-  cacheTag(CACHE_KEYS.QUESTION_VIEWS + id);
-
-  try {
-    const { database } = await createAdminClient();
-    const question = await database.getRow<Question>({
-      databaseId: appwriteConfig.databaseId,
-      tableId: appwriteConfig.questionsTableId,
-      rowId: id,
-      queries: [Query.select(["views"])],
-    });
-    return question.views;
-  } catch (error) {
-    handleError(error);
-    return 0;
-  }
-};
-
-export async function getAnswers({
-  questionId,
-  page = 1,
-  pageSize = 10,
-  filter = "default",
-}: {
-  questionId: string;
-  page?: number;
-  pageSize?: number;
-  filter?: "latest" | "oldest" | "popular" | "default";
-}) {
-  "use cache";
-
-  cacheLife({
-    revalidate: DEFAULT_CACHE_DURATION,
-  });
-
-  cacheTag(
-    CACHE_KEYS.QUESTION_ANSWERS + questionId,
-    String(page),
-    String(pageSize),
-    filter,
-  );
-
-  try {
-    const { database } = await createAdminClient();
-
-    const queries = [
-      Query.limit(pageSize),
-      Query.offset((page - 1) * pageSize),
-      Query.select(["*", "author.name", "author.image"]),
-      Query.equal("question", questionId)
-    ];
-
-    switch (filter) {
-      case "latest":
-        queries.push(Query.orderDesc("$createdAt"));
-        break;
-      case "oldest":
-        queries.push(Query.orderAsc("$createdAt"));
-        break;
-      case "popular":
-        queries.push(Query.orderDesc("upvotes"));
-        break;
-      default:
-        queries.push(Query.orderDesc("$createdAt"));
-    }
-
-    const res = await database.listRows<Answer>({
-      databaseId: appwriteConfig.databaseId,
-      tableId: appwriteConfig.answersTableId,
-      queries,
-    });
-
-    return res;
-  } catch (e) {
-    const error = handleError(e);
-    logger.error(JSON.stringify(error));
-
-    return {
-      total: 0,
-      rows: [],
-      error: error.message,
-    };
-  }
-}
-
 const QuestionDetailsPage = async ({ params }: Props) => {
   const { id } = await params;
-  const [user, question, views] = await Promise.all([
+  const [user, question, views, answersRes] = await Promise.all([
     getCurrentUser(),
     getQuestionDetails(id),
     getQuestionViews(id),
+    getAnswers({ questionId: id }),
   ]);
 
   return (
@@ -248,6 +123,22 @@ const QuestionDetailsPage = async ({ params }: Props) => {
               <TagCard key={tag.$id} $id={tag.$id} name={tag.title} compact />
             ))}
           </div>
+
+          <section className="my-5">
+            <DataRenderer
+              data={"error" in answersRes ? [] : [answersRes]}
+              empty={EMPTY_ANSWERS}
+              success={!("error" in answersRes)}
+              error={
+                "error" in answersRes
+                  ? { message: answersRes.error }
+                  : undefined
+              }
+              render={([res]) => (
+                <AnswersList answers={res.rows} total={res.total} />
+              )}
+            />
+          </section>
 
           <section className="my-5">
             <AnswerForm questionId={question.$id} />
