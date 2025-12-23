@@ -25,7 +25,18 @@ export const AskQuestionSchema = z.object({
 export type AskQuestionSchemaType = z.infer<typeof AskQuestionSchema>;
 
 export const AnswerSchema = z.object({
-    content: z.string().min(30, "Answer must be at least 30 characters long."),
+    content: z.string().min(30, { error: "Answer must be at least 30 characters long." }),
 });
 
 export type AnswerSchemaType = z.infer<typeof AnswerSchema>;
+
+
+export const AIAnswerSchema = z.object({
+    question: z.string()
+        .min(5, { error: "Question is required and must be at least 5 characters long." })
+        .max(130, { error: "Question cannot exceed 130 characters." }),
+    content: z.string()
+        .min(100, { error: "Answer must be at least 100 characters long." }),
+});
+
+export type AIAnswerSchemaType = z.infer<typeof AIAnswerSchema>;

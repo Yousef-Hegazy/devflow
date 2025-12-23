@@ -1,9 +1,10 @@
 import { answerQuestion, createQuestion, updateQuestion } from "@/actions/questions";
 import { toastManager } from "@/components/ui/toast";
+import { logger } from "@/pino";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { AnswerSchemaType, AskQuestionSchemaType } from "../validators/questionSchemas";
-import { logger } from "@/pino";
+import { client } from "../rpc";
+import { AIAnswerSchemaType, AnswerSchemaType, AskQuestionSchemaType } from "../validators/questionSchemas";
 
 export function useCreateQuestion() {
     const router = useRouter();
@@ -73,4 +74,30 @@ export function useAnswerQuestion() {
             })
         }
     })
-}    
+}
+
+export function useAIAnswer() {
+    return useMutation({
+        mutationFn: async ({ question, content }: AIAnswerSchemaType) => {
+            const res = await client.api.ai.answer.$post({
+                json: { question, content }
+            });
+
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || "Failed to Generate AI Answer")
+            }
+            const data = await res.json();
+            return data;
+        },
+        onError: (error) => {
+            toastManager.add({
+                title: "Failed to Generate AI Answer",
+                description: error.message || "An error occurred while generating the AI answer.",
+                type: "error",
+            })
+        },
+        retry: 0,
+    })
+}

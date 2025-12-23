@@ -1,26 +1,42 @@
+import { getAnswers } from "@/actions/questions";
 import AnswerCard from "@/components/cards/AnswerCard";
-import { Answer } from "@/lib/appwrite/types/appwrite";
+import DataRenderer from "@/components/DataRenderer";
+import { EMPTY_ANSWERS } from "@/lib/constants/states";
 
 type Props = {
-  answers: Array<Answer>;
-  total?: number;
+  questionId: string;
 };
 
-const AnswersList = ({ answers, total }: Props) => {
+const AnswersList = async ({ questionId }: Props) => {
+  const answersRes = await getAnswers({ questionId });
+
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <h3 className="primary-text-gradient">
-          {total || 0} {total && total > 1 ? "Answers" : "Answer"}
-        </h3>
+    <section className="my-5">
+      <DataRenderer
+        data={"error" in answersRes ? [] : [answersRes]}
+        empty={EMPTY_ANSWERS}
+        success={!("error" in answersRes)}
+        error={
+          "error" in answersRes ? { message: answersRes.error } : undefined
+        }
+        render={([res]) => (
+          <div>
+            <div className="flex items-center justify-between">
+              <h3 className="primary-text-gradient">
+                {res.total || 0}{" "}
+                {res.total && res.total > 1 ? "Answers" : "Answer"}
+              </h3>
 
-        <p>Filters</p>
-      </div>
+              <p>Filters</p>
+            </div>
 
-      {answers.map((answer) => (
-        <AnswerCard key={answer.$id} answer={answer} />
-      ))}
-    </div>
+            {res.rows.map((answer) => (
+              <AnswerCard key={answer.$id} answer={answer} />
+            ))}
+          </div>
+        )}
+      />
+    </section>
   );
 };
 

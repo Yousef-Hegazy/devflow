@@ -1,21 +1,19 @@
-import {
-  getAnswers,
-  getQuestionDetails,
-  getQuestionViews,
-} from "@/actions/questions";
+import { getQuestionDetails, getQuestionViews } from "@/actions/questions";
 import TagCard from "@/components/cards/TagCard";
 import DataRenderer from "@/components/DataRenderer";
 import AnswerForm from "@/components/forms/AnswerForm";
 import IncrementQuestionView from "@/components/IncrementQuestionView";
+import Loading from "@/components/Loading";
 import PreviewMarkdown from "@/components/MarkdownEditor/PreviewMarkdown";
 import Metric from "@/components/Metric";
 import { Button } from "@/components/ui/button";
 import UserAvatar from "@/components/UserAvatar";
-import { EMPTY_ANSWERS, EMPTY_QUESTION } from "@/lib/constants/states";
+import { EMPTY_QUESTION } from "@/lib/constants/states";
 import { getTimeAgo } from "@/lib/helpers/date";
 import { getCurrentUser } from "@/lib/server";
 import { formatNumber } from "@/lib/utils";
 import Link from "next/link";
+import { Suspense } from "react";
 import AnswersList from "./AnswersList";
 
 type Props = {
@@ -26,11 +24,10 @@ type Props = {
 
 const QuestionDetailsPage = async ({ params }: Props) => {
   const { id } = await params;
-  const [user, question, views, answersRes] = await Promise.all([
+  const [user, question, views] = await Promise.all([
     getCurrentUser(),
     getQuestionDetails(id),
     getQuestionViews(id),
-    getAnswers({ questionId: id }),
   ]);
 
   return (
@@ -42,6 +39,7 @@ const QuestionDetailsPage = async ({ params }: Props) => {
       render={([question]) => (
         <>
           <IncrementQuestionView questionId={question.$id} />
+
           <div className="flex-start w-full flex-col">
             <div className="flex w-full flex-col-reverse justify-between">
               <div className="flex items-center justify-start gap-1">
@@ -124,24 +122,16 @@ const QuestionDetailsPage = async ({ params }: Props) => {
             ))}
           </div>
 
-          <section className="my-5">
-            <DataRenderer
-              data={"error" in answersRes ? [] : [answersRes]}
-              empty={EMPTY_ANSWERS}
-              success={!("error" in answersRes)}
-              error={
-                "error" in answersRes
-                  ? { message: answersRes.error }
-                  : undefined
-              }
-              render={([res]) => (
-                <AnswersList answers={res.rows} total={res.total} />
-              )}
-            />
-          </section>
+          <Suspense fallback={<Loading />} key={question.$id}>
+            <AnswersList questionId={id} />
+          </Suspense>
 
           <section className="my-5">
-            <AnswerForm questionId={question.$id} />
+            <AnswerForm
+              questionId={question.$id}
+              questionTitle={question.title}
+              questionContent={question.content}
+            />
           </section>
         </>
       )}
