@@ -37,6 +37,7 @@ export const AIAnswerSchema = z.object({
         .max(130, { error: "Question cannot exceed 130 characters." }),
     content: z.string()
         .min(100, { error: "Answer must be at least 100 characters long." }),
+    answer: z.string().min(30, { error: "Answer must be at least 30 characters long." }),
 });
 
 export type AIAnswerSchemaType = z.infer<typeof AIAnswerSchema>;

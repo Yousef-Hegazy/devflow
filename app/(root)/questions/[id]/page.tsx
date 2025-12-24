@@ -8,6 +8,7 @@ import PreviewMarkdown from "@/components/MarkdownEditor/PreviewMarkdown";
 import Metric from "@/components/Metric";
 import { Button } from "@/components/ui/button";
 import UserAvatar from "@/components/UserAvatar";
+import Votes from "@/components/votes/Votes";
 import { EMPTY_QUESTION } from "@/lib/constants/states";
 import { getTimeAgo } from "@/lib/helpers/date";
 import { getCurrentUser } from "@/lib/server";
@@ -72,8 +73,9 @@ const QuestionDetailsPage = async ({ params }: Props) => {
                   >
                     Update Question
                   </Button>
-                ) : null}
-                {/* <p>Votes</p> */}
+                ) : (
+                  <Votes />
+                )}
               </div>
             </div>
 

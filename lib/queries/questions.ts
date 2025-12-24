@@ -78,9 +78,9 @@ export function useAnswerQuestion() {
 
 export function useAIAnswer() {
     return useMutation({
-        mutationFn: async ({ question, content }: AIAnswerSchemaType) => {
+        mutationFn: async ({ question, content, answer }: AIAnswerSchemaType) => {
             const res = await client.api.ai.answer.$post({
-                json: { question, content }
+                json: { question, content, answer }
             });
 
 

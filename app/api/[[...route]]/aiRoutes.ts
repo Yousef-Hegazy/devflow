@@ -23,11 +23,11 @@ const aiRoutes = new Hono()
         try {
             const body = c.req.valid("json");
 
-            const { question, content } = body;
+            const { question, content, answer } = body;
 
             const { text } = await generateText({
                 model: google("gemini-2.5-flash"),
-                prompt: `Generate a markdown-formatted answer for the following question:\n\nQuestion: ${question}\n\nBased on this content: ${content}.`,
+                prompt: `Generate a markdown-formatted answer for the following question:\n\nQuestion: ${question}\n\nBased on this content: ${content}. Take into account the following draft answer: ${answer}. Prioritize the draft answer if it was correct and relevant.`,
                 system:
                     "You are a helpful assistant that provides informative responses in markdown format. Use appropriate markdown syntax for headings, lists, code blocks, and emphasis where necessary. For code blocks, use short-form smaller case language identifiers (e.g., ```js for JavaScript). Ensure the response is clear, concise, and well-structured.",
                 maxRetries: 0,

@@ -2,6 +2,7 @@
 
 import { useAIAnswer, useAnswerQuestion } from "@/lib/queries/questions";
 import {
+  AIAnswerSchema,
   AnswerSchema,
   AnswerSchemaType,
 } from "@/lib/validators/questionSchemas";
@@ -11,10 +12,12 @@ import { MDXEditorMethods } from "@mdxeditor/editor";
 import Image from "next/image";
 import { useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
+import z from "zod";
 import MarkdownEditor from "../MarkdownEditor";
 import { Field, FieldDescription, FieldLabel } from "../ui/field";
 import { Form } from "../ui/form";
 import LoadingButton from "../ui/LoadingButton";
+import { toastManager } from "../ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 
 type Props = {
@@ -32,13 +35,14 @@ const AnswerForm = ({
 }: Props) => {
   const user = useAuthStore((state) => state.user);
   const editorRef = useRef<MDXEditorMethods>(null);
-  const { control, handleSubmit, setValue } = useForm<AnswerSchemaType>({
-    resolver: zodResolver(AnswerSchema),
-    mode: "all",
-    defaultValues: {
-      content: initialContent,
-    },
-  });
+  const { control, handleSubmit, setValue, getValues } =
+    useForm<AnswerSchemaType>({
+      resolver: zodResolver(AnswerSchema),
+      mode: "all",
+      defaultValues: {
+        content: initialContent,
+      },
+    });
 
   const { mutate: answerQuestion, isPending: isAnswering } =
     useAnswerQuestion();
@@ -46,18 +50,44 @@ const AnswerForm = ({
   const { mutate: generateAIAnswer, isPending: isGeneratingAIAnswer } =
     useAIAnswer();
 
-  const submit = (data: AnswerSchemaType) =>
+  const onSubmit = (data: AnswerSchemaType) =>
     answerQuestion(
       { answer: data, questionId },
       {
         onSuccess: () => {
           setValue("content", "");
+          if (editorRef.current) {
+            editorRef.current.setMarkdown("");
+          }
         },
       },
     );
 
   const onGenerateAIAnswer = async () => {
     if (!user?.$id) {
+      toastManager.add({
+        title: "Authentication Required",
+        description: "You must be logged in to generate an AI answer.",
+        type: "info",
+      });
+      return;
+    }
+
+    const content = getValues("content");
+
+    const validated = AIAnswerSchema.partial().safeParse({
+      answer: content,
+    });
+
+    if (!validated.success) {
+      const err = z.treeifyError(validated.error).properties?.answer
+        ?.errors?.[0];
+      toastManager.add({
+        title: "Please check your answer",
+        description: err || "Please check your input and try again.",
+        type: "error",
+      });
+
       return;
     }
 
@@ -66,6 +96,7 @@ const AnswerForm = ({
         {
           content: questionContent,
           question: questionTitle,
+          answer: content,
         },
         {
           onSuccess: (data) => {
@@ -82,7 +113,8 @@ const AnswerForm = ({
   };
 
   return (
-    <Form onSubmit={handleSubmit(submit)} className="gap-6">
+    // eslint-disable-next-line react-hooks/refs
+    <Form onSubmit={handleSubmit(onSubmit)} className="gap-6">
       <div className="flex items-center justify-end">
         <Tooltip disabled={!!user?.$id}>
           <TooltipTrigger>
@@ -95,16 +127,16 @@ const AnswerForm = ({
             >
               <Image
                 src="/icons/stars.svg"
-                alt="Generate AI Answer"
+                alt="Improve Answer with AI"
                 width={12}
                 height={12}
                 className="object-contain"
               />
-              Generate AI Answer
+              Improve Answer with AI
             </LoadingButton>
           </TooltipTrigger>
 
-          <TooltipPopup>Must be logged in to generate AI answer.</TooltipPopup>
+          <TooltipPopup>Must be logged in to use this feature.</TooltipPopup>
         </Tooltip>
       </div>
 
