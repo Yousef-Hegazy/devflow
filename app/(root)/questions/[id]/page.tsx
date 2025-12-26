@@ -7,7 +7,9 @@ import Loading from "@/components/Loading";
 import PreviewMarkdown from "@/components/MarkdownEditor/PreviewMarkdown";
 import Metric from "@/components/Metric";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import UserAvatar from "@/components/UserAvatar";
+import Votes from "@/components/votes/Votes";
 import { EMPTY_QUESTION } from "@/lib/constants/states";
 import { getTimeAgo } from "@/lib/helpers/date";
 import { getCurrentUser } from "@/lib/server";
@@ -15,7 +17,7 @@ import { formatNumber } from "@/lib/utils";
 import Link from "next/link";
 import { Suspense } from "react";
 import AnswersList from "./AnswersList";
-import Votes from "@/components/votes/Votes";
+import UserQuestionVotes from "./UserQuestionVotes";
 
 type Props = {
   params: Promise<{
@@ -73,16 +75,25 @@ const QuestionDetailsPage = async ({ params }: Props) => {
                   >
                     Update Question
                   </Button>
-                ) : (
-                  <Suspense fallback={<p>Loading votes...</p>} key={user?.$id + question.$id}>
+                ) : null}
+
+                <Suspense fallback={<Skeleton className="h-6 w-27.5" />}>
+                  {user?.$id ? (
+                    <UserQuestionVotes
+                      upvotes={question.upvotes}
+                      downvotes={question.downvotes}
+                      userId={user?.$id}
+                      questionId={question.$id}
+                    />
+                  ) : (
                     <Votes
                       upvotes={question.upvotes}
                       downvotes={question.downvotes}
                       userId={user?.$id}
                       questionId={question.$id}
                     />
-                  </Suspense>
-                )}
+                  )}
+                </Suspense>
               </div>
             </div>
 
@@ -132,7 +143,7 @@ const QuestionDetailsPage = async ({ params }: Props) => {
           </div>
 
           <Suspense fallback={<Loading />} key={question.$id}>
-            <AnswersList questionId={id} />
+            <AnswersList questionId={id} userId={user?.$id} />
           </Suspense>
 
           <section className="my-5">

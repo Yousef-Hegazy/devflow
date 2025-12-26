@@ -1,14 +1,19 @@
+import UserAnswerVotes from "@/app/(root)/questions/[id]/UserAnswerVotes";
 import { Answer } from "@/lib/appwrite/types";
-import Link from "next/link";
-import UserAvatar from "../UserAvatar";
 import { getTimeAgo } from "@/lib/helpers/date";
+import Link from "next/link";
+import { Suspense } from "react";
 import PreviewMarkdown from "../MarkdownEditor/PreviewMarkdown";
+import { Skeleton } from "../ui/skeleton";
+import UserAvatar from "../UserAvatar";
+import Votes from "../votes/Votes";
 
 type Props = {
   answer: Answer;
+  userId?: string;
 };
 
-const AnswerCard = ({ answer }: Props) => {
+const AnswerCard = ({ answer, userId }: Props) => {
   const timeAgo = getTimeAgo(new Date(answer.$createdAt));
 
   return (
@@ -40,7 +45,24 @@ const AnswerCard = ({ answer }: Props) => {
           </Link>
         </div>
 
-        <div className="flex justify-end">Votes</div>
+        <Suspense fallback={<Skeleton className="h-6 w-27.5" />}>
+          {userId ? (
+            <UserAnswerVotes
+              upvotes={answer.upvotes}
+              downvotes={answer.downvotes}
+              userId={userId}
+              answerId={answer.$id}
+              questionId={String(answer.question)}
+            />
+          ) : (
+            <Votes
+              upvotes={answer.upvotes}
+              downvotes={answer.downvotes}
+              answerId={answer.$id}
+              questionId={String(answer.question)}
+            />
+          )}
+        </Suspense>
       </div>
 
       <PreviewMarkdown content={answer.content} />

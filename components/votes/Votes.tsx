@@ -1,50 +1,71 @@
 "use client";
 
-import { VoteType } from "@/lib/appwrite/types";
+import { Vote, VoteType } from "@/lib/appwrite/types";
 import {
+  useDownvoteAnswer,
   useDownvoteQuestion,
-  useGetUserQuestionVote,
+  useUpvoteAnswer,
   useUpvoteQuestion,
 } from "@/lib/queries/votes";
-import { formatNumber } from "@/lib/utils";
-import Image from "next/image";
+import { cn, formatNumber } from "@/lib/utils";
+import { ArrowBigDown, ArrowBigUp } from "lucide-react";
+import { use } from "react";
 import LoadingButton from "../ui/LoadingButton";
-import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 type Props = {
   upvotes: number;
-  // hasUpvoted?: boolean;
   downvotes: number;
-  // hasDownvoted?: boolean;
   userId?: string;
   questionId: string;
+  answerId?: string;
+  vote?: Promise<Vote | null>;
 };
 
 const Votes = ({
   upvotes,
   downvotes,
-  // hasDownvoted,
-  // hasUpvoted,
   userId,
   questionId,
+  answerId,
+  vote: votePromise,
 }: Props) => {
+  let vote = null;
+  let hasUpvoted = false;
+  let hasDownvoted = false;
+
+  if (votePromise) {
+    vote = use<Vote | null>(votePromise);
+    hasUpvoted = vote?.type === VoteType.UPVOTE;
+    hasDownvoted = vote?.type === VoteType.DOWNVOTE;
+  }
+
   const formattedUpvotes = formatNumber(upvotes);
   const formattedDownvotes = formatNumber(downvotes);
 
-  const { mutate: upvote, isPending: isUpvoting } = useUpvoteQuestion();
-  const { mutate: downvote, isPending: isDownvoting } = useDownvoteQuestion();
+  const isQuestion = !!(questionId && !answerId);
+  const targetId = isQuestion ? questionId : answerId || "";
 
-  const { data: vote, isPending: isVoteLoading } = useGetUserQuestionVote(
-    questionId,
-    userId,
-  );
-  const hasUpvoted = vote?.type === VoteType.UPVOTE;
-  const hasDownvoted = vote?.type === VoteType.DOWNVOTE;
+  const { mutate: upvoteQuestion, isPending: isUpvotingQuestion } =
+    useUpvoteQuestion();
+  const { mutate: downvoteQuestion, isPending: isDownvotingQuestion } =
+    useDownvoteQuestion();
+  const { mutate: upvoteAnswer, isPending: isUpvotingAnswer } =
+    useUpvoteAnswer();
+  const { mutate: downvoteAnswer, isPending: isDownvotingAnswer } =
+    useDownvoteAnswer();
 
-  return isVoteLoading ? (
-    <Skeleton className="h-6 w-27.5" />
-  ) : (
+  const isUpvoting = isQuestion ? isUpvotingQuestion : isUpvotingAnswer;
+  const isDownvoting = isQuestion ? isDownvotingQuestion : isDownvotingAnswer;
+
+  const upvote = isQuestion
+    ? () => upvoteQuestion(targetId)
+    : () => upvoteAnswer({ answerId: targetId, questionId });
+  const downvote = isQuestion
+    ? () => downvoteQuestion(targetId)
+    : () => downvoteAnswer({ answerId: targetId, questionId });
+
+  return (
     <Tooltip disabled={!!userId}>
       <TooltipTrigger
         render={
@@ -53,17 +74,15 @@ const Votes = ({
               <LoadingButton
                 isLoading={isUpvoting}
                 wholeLoading
-                size="icon-xs"
+                size="icon-sm"
                 variant="ghost"
                 disabled={!userId || isDownvoting}
-                onClick={() => upvote(questionId)}
+                onClick={upvote}
               >
-                <Image
-                  src={hasUpvoted ? "/icons/upvoted.svg" : "/icons/upvote.svg"}
-                  width={18}
-                  height={18}
-                  alt="Upvote"
-                  aria-label="upvote"
+                <ArrowBigUp
+                  className={cn("text-green-500", {
+                    "fill-green-500": hasUpvoted,
+                  })}
                 />
               </LoadingButton>
 
@@ -79,20 +98,14 @@ const Votes = ({
                 isLoading={isDownvoting}
                 wholeLoading
                 disabled={!userId || isUpvoting}
-                size="icon-xs"
+                size="icon-sm"
                 variant="ghost"
-                onClick={() => downvote(questionId)}
+                onClick={downvote}
               >
-                <Image
-                  src={
-                    hasDownvoted
-                      ? "/icons/downvoted.svg"
-                      : "/icons/downvote.svg"
-                  }
-                  width={18}
-                  height={18}
-                  alt="Downvote"
-                  aria-label="downvote"
+                <ArrowBigDown
+                  className={cn("text-rose-500", {
+                    "fill-rose-500": hasDownvoted,
+                  })}
                 />
               </LoadingButton>
 

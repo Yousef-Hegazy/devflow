@@ -5,9 +5,10 @@ import { EMPTY_ANSWERS } from "@/lib/constants/states";
 
 type Props = {
   questionId: string;
+  userId?: string;
 };
 
-const AnswersList = async ({ questionId }: Props) => {
+const AnswersList = async ({ questionId, userId }: Props) => {
   const answersRes = await getAnswers({ questionId });
 
   return (
@@ -31,7 +32,7 @@ const AnswersList = async ({ questionId }: Props) => {
             </div>
 
             {res.rows.map((answer) => (
-              <AnswerCard key={answer.$id} answer={answer} />
+              <AnswerCard key={answer.$id} answer={answer} userId={userId} />
             ))}
           </div>
         )}
