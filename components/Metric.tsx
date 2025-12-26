@@ -26,7 +26,7 @@ const MetricContent = ({
 }: Props) => {
   return (
     <>
-      <img
+      <Image
         src={imgUrl}
         alt={alt}
         width={20}

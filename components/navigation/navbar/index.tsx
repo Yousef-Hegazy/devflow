@@ -1,5 +1,5 @@
 import UserAvatar from "@/components/UserAvatar";
-import { AppUser } from "@/lib/appwrite/types/appwrite";
+import { AppUser } from "@/lib/appwrite/types";
 import Image from "next/image";
 import Link from "next/link";
 import MobileNavigation from "./MobileNavigation";

@@ -8,7 +8,6 @@ import PreviewMarkdown from "@/components/MarkdownEditor/PreviewMarkdown";
 import Metric from "@/components/Metric";
 import { Button } from "@/components/ui/button";
 import UserAvatar from "@/components/UserAvatar";
-import Votes from "@/components/votes/Votes";
 import { EMPTY_QUESTION } from "@/lib/constants/states";
 import { getTimeAgo } from "@/lib/helpers/date";
 import { getCurrentUser } from "@/lib/server";
@@ -16,6 +15,7 @@ import { formatNumber } from "@/lib/utils";
 import Link from "next/link";
 import { Suspense } from "react";
 import AnswersList from "./AnswersList";
+import Votes from "@/components/votes/Votes";
 
 type Props = {
   params: Promise<{
@@ -74,7 +74,14 @@ const QuestionDetailsPage = async ({ params }: Props) => {
                     Update Question
                   </Button>
                 ) : (
-                  <Votes />
+                  <Suspense fallback={<p>Loading votes...</p>} key={user?.$id + question.$id}>
+                    <Votes
+                      upvotes={question.upvotes}
+                      downvotes={question.downvotes}
+                      userId={user?.$id}
+                      questionId={question.$id}
+                    />
+                  </Suspense>
                 )}
               </div>
             </div>

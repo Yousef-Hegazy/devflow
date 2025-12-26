@@ -4,7 +4,7 @@ import HomeFilter from "@/components/filters/HomeFilter";
 import LocalSearch from "@/components/search/LocalSearch";
 import { Button } from "@/components/ui/button";
 import { createAdminClient } from "@/lib/appwrite/config";
-import { Question } from "@/lib/appwrite/types/appwrite";
+import { Question } from "@/lib/appwrite/types";
 import { DEFAULT_CACHE_DURATION, HomeFilterType } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";

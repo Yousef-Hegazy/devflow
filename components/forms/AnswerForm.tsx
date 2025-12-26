@@ -117,24 +117,26 @@ const AnswerForm = ({
     <Form onSubmit={handleSubmit(onSubmit)} className="gap-6">
       <div className="flex items-center justify-end">
         <Tooltip disabled={!!user?.$id}>
-          <TooltipTrigger>
-            <LoadingButton
-              className="btn light-border-2 text-primary-500 dark:text-primary-500 gap-1.5 rounded-md border px-4 py-2.5 shadow-none"
-              type="button"
-              isLoading={isGeneratingAIAnswer}
-              disabled={isGeneratingAIAnswer || !user?.$id}
-              onClick={onGenerateAIAnswer}
-            >
-              <Image
-                src="/icons/stars.svg"
-                alt="Improve Answer with AI"
-                width={12}
-                height={12}
-                className="object-contain"
-              />
-              Improve Answer with AI
-            </LoadingButton>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <LoadingButton
+                className="btn light-border-2 text-primary-500 dark:text-primary-500 gap-1.5 rounded-md border px-4 py-2.5 shadow-none"
+                type="button"
+                isLoading={isGeneratingAIAnswer}
+                disabled={isGeneratingAIAnswer || !user?.$id}
+                onClick={onGenerateAIAnswer}
+              >
+                <Image
+                  src="/icons/stars.svg"
+                  alt="Improve Answer with AI"
+                  width={12}
+                  height={12}
+                  className="object-contain"
+                />
+                Improve Answer with AI
+              </LoadingButton>
+            }
+          />
 
           <TooltipPopup>Must be logged in to use this feature.</TooltipPopup>
         </Tooltip>

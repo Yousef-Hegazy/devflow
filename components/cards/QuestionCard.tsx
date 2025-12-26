@@ -2,7 +2,7 @@ import { getTimeAgo } from "@/lib/helpers/date";
 import Link from "next/link";
 import TagCard from "./TagCard";
 import Metric from "../Metric";
-import type { Question } from "@/lib/appwrite/types/appwrite";
+import type { Question } from "@/lib/appwrite/types";
 
 type Props = {
   question: Question;

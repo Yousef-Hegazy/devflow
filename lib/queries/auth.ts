@@ -3,7 +3,7 @@ import { toastManager } from "@/components/ui/toast";
 import useAuthStore from "@/stores/authStore";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { SignUpSchemaType } from "../validators/authSchemas";
+import { SignInSchemaType, SignUpSchemaType } from "../validators/authSchemas";
 import { logger } from "@/pino";
 
 export function useSignUp() {
@@ -32,8 +32,9 @@ export function useSignIn() {
     const setUser = useAuthStore((state) => state.setUser);
 
     return useMutation({
-        mutationFn: signIn,
+        mutationFn: (data: SignInSchemaType) => signIn(data),
         onSuccess: (user) => {
+            console.log({ user })
             setUser(user);
             router.push("/");
         },

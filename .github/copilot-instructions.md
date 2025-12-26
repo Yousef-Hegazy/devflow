@@ -1,114 +1,103 @@
-# DevFlow AI Coding Instructions
+# DevFlow - Copilot Instructions
 
 ## Architecture Overview
 
-DevFlow is a Next.js 16 application using the app router, built with React 19. It follows a community-driven Q&A platform pattern similar to Stack Overflow.
+DevFlow is a Stack Overflow-style Q&A platform built with **Next.js 16 (App Router)**, **Appwrite** (backend/database), and **Hono** (API routes). Key architectural decisions:
 
-### Core Technologies
-- **Frontend**: Next.js 16 (app router), React 19, TypeScript
-- **Backend**: Appwrite (database, auth, storage, file handling)
-- **State Management**: Zustand (auth), TanStack Query (server state)
-- **Styling**: Tailwind CSS with shadcn/ui components (New York style)
-- **Forms**: React Hook Form with Zod validation
-- **Caching**: Next.js built-in caching with "use cache" directive
-- **Markdown**: MDXEditor for rich text editing
+- **Backend**: Appwrite TablesDB for data storage with admin/session clients in [lib/appwrite/config.ts](../lib/appwrite/config.ts)
+- **API Routes**: Hono framework mounted at `/api/[[...route]]` - see [route.ts](../app/api/[[...route]]/route.ts) for pattern
+- **State Management**: Zustand for client auth state ([stores/authStore.ts](../stores/authStore.ts)), TanStack Query for server data
+- **UI Components**: Base UI components from `@base-ui-components/react` (NOT shadcn/ui despite components.json presence)
 
-### Key Architectural Decisions
-- Server actions handle all mutations (located in `actions/` folder)
-- Data fetching uses Appwrite SDK with admin/session clients
-- Complex operations use Appwrite transactions (e.g., question creation with tags)
-- Authentication state hydrated via Zustand store from server-side user fetch
-- Queries cached with Next.js cache tags for invalidation
+## Data Flow Pattern
 
-### Data Flow Patterns
-- **Reads**: Server components fetch data directly from Appwrite using admin client, cached with Next.js
-- **Writes**: Client components trigger server actions via TanStack Query mutations
-- **Auth**: Server fetches user on layout, hydrates Zustand store on client
-- **Relations**: Appwrite queries with select/include patterns (e.g., `author.name`, `tags.tag.title`)
-
-## Developer Workflows
-
-### Essential Commands
-- `npm run dev` - Start development server with Turbopack optimizations
-- `npm run build` - Production build with React Compiler enabled
-- `npm run lint` - ESLint checking (Next.js config)
-
-### Build Configuration
-- React Compiler enabled for optimization
-- Turbopack filesystem cache for faster dev rebuilds
-- Component caching enabled
-- Remote images allowed from localhost for development
-
-## Project-Specific Conventions
-
-### Form Handling
-Always use controlled components with React Hook Form:
-```tsx
-const { control, handleSubmit } = useForm<Schema>({
-  resolver: zodResolver(Schema),
-  mode: "all"
-});
 ```
-Use `ControlledField` component for inputs with built-in validation display.
-
-### Server Actions Pattern
-Place in `actions/` folder, use "use server" directive:
-```typescript
-export async function createQuestion(userId: string, data: SchemaType) {
-  const { database } = await createAdminClient();
-  // Implementation
-}
+Server Actions (actions/) ──> Appwrite TablesDB
+       ↑
+TanStack Query hooks (lib/queries/) ──> Components
+       ↑
+Zustand stores (stores/) ──> Client-side auth state
 ```
 
-### Query Patterns
-Mutations in `lib/queries/` with toast notifications and router navigation:
-```typescript
-export function useCreateQuestion() {
-  return useMutation({
-    mutationFn: createQuestion,
-    onSuccess: (id) => {
-      toastManager.add({ title: "Success", type: "success" });
-      router.push(`/questions/${id}`);
-    }
-  });
-}
-```
+### Server Actions
+- Located in `actions/` - use `"use server"` directive
+- Handle authentication via `getCurrentUser()` from [lib/server/auth.ts](../lib/server/auth.ts)
+- Use `handleError()` from [lib/errors.ts](../lib/errors.ts) for consistent error handling with 401 redirects
+- Transactions use `database.createTransaction()` and `database.createOperations()` for atomic operations
 
-### Component Organization
-- `components/ui/` - shadcn/ui primitives
-- `components/forms/` - Form components with ControlledField
-- `components/cards/` - Data display cards
-- `components/navigation/` - Layout components
-- Custom hooks in `hooks/`
+### Query Hooks
+- Located in `lib/queries/` - wrap server actions with TanStack Query mutations
+- Use `toastManager.add()` from [components/ui/toast.tsx](../components/ui/toast.tsx) for success/error notifications
+- Cache keys defined in [lib/constants/cacheKeys.ts](../lib/constants/cacheKeys.ts) as `CACHE_KEYS` enum
 
-### Appwrite Integration
-- Use `createAdminClient()` for server-side operations
-- Use `createSessionClient()` for user-scoped operations
-- Tables defined in `lib/constants/server.ts`
-- Types in `lib/appwrite/types/appwrite.ts`
+## Key Conventions
 
-### Caching Strategy
-Use Next.js cache with tags for invalidation:
+### Caching (Next.js 15+ Pattern)
 ```typescript
 "use cache";
-cacheTag(CACHE_KEYS.QUESTIONS_LIST, ...params);
+cacheLife({ revalidate: DEFAULT_CACHE_DURATION });  // 300 seconds
+cacheTag(CACHE_KEYS.QUESTIONS_LIST, ...);
+```
+Invalidate with `updateTag(CACHE_KEYS.QUESTIONS_LIST)` from `next/cache`.
+
+### Validation
+- Schemas in `lib/validators/` using Zod v4
+- Types inferred with `z.infer<typeof Schema>` and exported as `SchemaType`
+- Hono routes validate with `zValidator("json", Schema)`
+
+### Appwrite Types
+- Auto-generated types in [lib/appwrite/types.ts](../lib/appwrite/types.ts) - extend `Models.Row`
+- Use `Query` builder from `node-appwrite` for database queries
+- Permissions set with `Permission.read(Role.any())`, `Permission.write(Role.user(userId))`
+
+### Client Components
+- Forms use `react-hook-form` with `zodResolver` - see [QuestionForm.tsx](../components/forms/QuestionForm.tsx)
+- Auth state hydrated via [AuthHydrator.tsx](../components/AuthHydrator.tsx) in root layout
+- Use `useAuthStore()` for accessing current user on client
+
+### Logging
+- Use `logger` from [pino.ts](../pino.ts) - auto-redacts sensitive fields
+- Pretty-printing in dev, JSON in production
+
+## File Structure Patterns
+
+| Directory | Purpose |
+|-----------|---------|
+| `actions/` | Server actions (mutations) |
+| `lib/queries/` | TanStack Query hooks calling server actions |
+| `lib/validators/` | Zod schemas + inferred types |
+| `lib/server/` | Server-only utilities (`import "server-only"`) |
+| `lib/constants/` | App constants, cache keys, UI config |
+| `components/ui/` | Base UI primitives (Base UI, not shadcn) |
+| `components/forms/` | Form components with react-hook-form |
+
+## Common Tasks
+
+### Adding a New Feature
+1. Define Zod schema in `lib/validators/`
+2. Create server action in `actions/` with `"use server"`
+3. Add TanStack Query hook in `lib/queries/` for client consumption
+4. Add cache key to `CACHE_KEYS` enum if caching needed
+
+### Creating Appwrite Clients
+```typescript
+// Admin operations (no session required)
+const { database } = await createAdminClient();
+
+// User operations (requires session)
+const { database, account } = await createSessionClient();
 ```
 
-### Authentication Flow
-- Server fetches user in layout, passes to `AuthHydrator`
-- Zustand store updated on client hydration
-- Protected routes check `useAuthStore`
+### Error Handling in Actions
+```typescript
+try {
+  // ... operation
+} catch (error) {
+  throw handleError(error);  // Redirects on 401, returns Error otherwise
+}
+```
 
-### Error Handling
-- Appwrite errors use a small helper: `handleError` in `lib/errors.ts`.
-- `handleError(err)` redirects in case of 401 and returns Error, and is only uses on server.
-
-## Key Files to Reference
-
-- [app/layout.tsx](app/layout.tsx) - Provider setup and auth hydration
-- [actions/questions.ts](actions/questions.ts) - Complex transaction example
-- [lib/queries/questions.ts](lib/queries/questions.ts) - Mutation patterns
-- [components/forms/QuestionForm.tsx](components/forms/QuestionForm.tsx) - Form implementation
-- [lib/appwrite/config.ts](lib/appwrite/config.ts) - Client setup
-- [stores/authStore.ts](stores/authStore.ts) - Auth state management</content>
-<parameter name="filePath">d:\personal_projects\Next\devflow\.github\copilot-instructions.md
+## Commands
+- `npm run dev` - Development server
+- `npm run build` - Production build
+- `npm run lint` - ESLint

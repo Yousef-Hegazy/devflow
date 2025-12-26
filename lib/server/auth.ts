@@ -1,11 +1,12 @@
+import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { cookies } from "next/headers";
-import "server-only";
 import { createSessionClient } from "../appwrite/config";
-import { AppUser } from "../appwrite/types/appwrite";
 import { DEFAULT_CACHE_DURATION } from "../constants";
 import { CACHE_KEYS } from "../constants/cacheKeys";
 import { appwriteConfig } from "../constants/server";
+import { AppUser } from "../appwrite/types";
+import { logger } from "@/pino";
 
 export async function getSession() {
     const cookieStore = await cookies();
@@ -37,7 +38,8 @@ export async function getCurrentUser() {
 
         return user;
 
-    } catch {
+    } catch(e) {
+        logger.error({ error: e, message: "Error fetching current user" });
         cacheLife({ revalidate: 0 });
 
         return null;

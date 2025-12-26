@@ -1,8 +1,8 @@
 "use client";
 
-import { AppUser } from "@/lib/appwrite/types/appwrite";
+import { AppUser } from "@/lib/appwrite/types";
 import useAuthStore from "@/stores/authStore";
-import { useEffect } from "react";
+import { useEffect, useEffectEvent } from "react";
 
 type Props = {
   user: AppUser | null;
@@ -11,9 +11,13 @@ type Props = {
 const AuthHydrator = ({ user }: Props) => {
   const setUser = useAuthStore((state) => state.setUser);
 
-  useEffect(() => {
+  const setUserEvent = useEffectEvent((user: AppUser | null) => {
     setUser(user);
-  }, [setUser, user]);
+  });
+
+  useEffect(() => {
+    setUserEvent(user);
+  }, [user]);
 
   return null;
 };

@@ -1,16 +1,16 @@
 "use server";
 
 import { createAdminClient, createClient } from "@/lib/appwrite/config";
-import { AppUser } from "@/lib/appwrite/types/appwrite";
+import { AppUser } from "@/lib/appwrite/types";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
 import { getAppwriteInitialsAvatarUrl } from "@/lib/server";
 import { SignInSchemaType, SignUpSchemaType } from "@/lib/validators/authSchemas";
+import { logger } from "@/pino";
 import { updateTag } from "next/cache";
 import { redirect, RedirectType } from "next/navigation";
-import { ID, OAuthProvider, Permission, Query, Role } from "node-appwrite";
+import { Account, AppwriteException, ID, OAuthProvider, Permission, Query, Role, TablesDB } from "node-appwrite";
 import { deleteCookie, getCookie, setCookie } from "./cookies";
-import { logger } from "@/pino";
 
 export async function loginWithGoogle() {
     const { account } = await createAdminClient();
@@ -138,11 +138,7 @@ export async function handleOAuthSuccess(userId: string, secret: string, provide
 
 }
 
-export async function signUp(data: SignUpSchemaType) {
-    const { email, password, name, username } = data;
-
-    const { account, database } = await createAdminClient();
-
+export async function throwIfUserExists(database: TablesDB, email: string, username: string) {
     const res = await database.listRows<AppUser>({
         databaseId: appwriteConfig.databaseId,
         tableId: appwriteConfig.usersTableId,
@@ -158,42 +154,34 @@ export async function signUp(data: SignUpSchemaType) {
         throw new Error("This user already exists");
     }
 
-    const ac = await account.create({
-        userId: ID.unique(),
-        email,
-        password,
-        name,
-    });
+}
 
-    if (!ac.$id) {
-        throw new Error("Failed to create account");
-    }
+export async function createUser(database: TablesDB, data: SignUpSchemaType, id: string) {
+    const { email, username, name } = data;
 
-    const user = await database.createRow<AppUser>({
+
+
+    const user = await database.createRow({
         databaseId: appwriteConfig.databaseId,
         tableId: appwriteConfig.usersTableId,
-        rowId: ac.$id,
+        rowId: id,
         data: {
             name,
             email,
             username: username.toLowerCase().replace(/\s+/g, "") || "",
             image: getAppwriteInitialsAvatarUrl(name, 100, 100),
             provider: "credentials",
-            bio: "",
-            location: "",
-            portfolio: "",
-            reputation: 0,
-            answers: [],
-            questions: [],
-            collection: [],
-            interaction: [],
-            votes: [],
         },
         permissions: [
-            Permission.read(Role.user(ac.$id)),
-            Permission.update(Role.user(ac.$id)),
+            Permission.read(Role.user(id)),
+            Permission.update(Role.user(id)),
         ]
     });
+
+    return user as unknown as AppUser;
+}
+
+export async function createSessionAndUpdateUser(account: Account, email: string, password: string) {
 
     const session = await account.createEmailPasswordSession({
         email,
@@ -216,33 +204,85 @@ export async function signUp(data: SignUpSchemaType) {
     });
 
     updateTag(CACHE_KEYS.CURRENT_USER);
-
-    return user;
 }
+
+export async function signUp(data: SignUpSchemaType) {
+    const { account, database } = await createAdminClient();
+
+    await throwIfUserExists(database, data.email, data.username);
+
+    const { email, password, name, username } = data;
+
+    const res = await database.listRows<AppUser>({
+        databaseId: appwriteConfig.databaseId,
+        tableId: appwriteConfig.usersTableId,
+        queries: [
+            Query.or([
+                Query.equal("email", email),
+                Query.equal("username", username.toLowerCase().replace(/\s+/g, ""))
+            ])
+        ]
+    });
+
+    if (res.total > 0) {
+        throw new Error("This user already exists");
+    }
+
+    let userId = ID.unique();
+
+    try {
+        const ac = await account.create({
+            userId,
+            email,
+            password,
+            name,
+        });
+
+        userId = ac.$id;
+
+        const user = await createUser(database, data, userId);
+
+        await createSessionAndUpdateUser(account, email, password);
+
+        return user;
+    } catch (error) {
+        if (error instanceof AppwriteException && error.code === 409) {
+            const session = await account.createEmailPasswordSession({
+                email,
+                password
+            });
+            const { account: tempAcc } = await createClient(session.secret);
+            const acc = await tempAcc.get();
+            const user = await createUser(database, {
+                email: acc.email,
+                name: acc.name,
+                username: username,
+                password: password
+            }, acc.$id);
+            await setCookie({
+                name: appwriteConfig.sessionName,
+                value: session.secret,
+                httpOnly: true,
+                sameSite: "strict",
+                // secure: process.env.NODE_ENV === "production",
+                secure: true,
+                path: "/",
+                expires: new Date(session.expire),
+            });
+
+            updateTag(CACHE_KEYS.CURRENT_USER);
+            return user;
+        } else {
+            throw error;
+        }
+    }
+}
+
 
 export async function signIn(data: SignInSchemaType) {
     const { email, password } = data;
 
     const { account, database } = await createAdminClient();
-
-    const session = await account.createEmailPasswordSession({
-        email,
-        password,
-    });
-
-    if (!session.secret) {
-        throw new Error("Failed to create session");
-    }
-
-    await setCookie({
-        name: appwriteConfig.sessionName,
-        value: session.secret,
-        httpOnly: true,
-        sameSite: "strict",
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-        expires: new Date(session.expire),
-    });
 
 
     const users = await database.listRows<AppUser>({
@@ -269,6 +309,26 @@ export async function signIn(data: SignInSchemaType) {
             },
         });
     }
+
+
+    const session = await account.createEmailPasswordSession({
+        email,
+        password,
+    });
+
+    if (!session.secret) {
+        throw new Error("Failed to create session");
+    }
+
+    await setCookie({
+        name: appwriteConfig.sessionName,
+        value: session.secret,
+        httpOnly: true,
+        sameSite: "strict",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        expires: new Date(session.expire),
+    });
 
     updateTag(CACHE_KEYS.CURRENT_USER);
 

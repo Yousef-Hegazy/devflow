@@ -5,4 +5,5 @@ export const enum CACHE_KEYS {
     QUESTION_VIEWS = "questionViews",
     QUESTION_ANSWERS = "questionAnswers",
     TAGS_LIST = "tagsList",
+    USER_QUESTION_VOTE = "userQuestionVote",
 }

@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "http",
         hostname: "localhost",
+      },
+      {
+        protocol: "https",
+        hostname: "appwrite.appwrite-yousef.top"
       }
     ]
   }

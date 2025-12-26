@@ -1,5 +1,5 @@
 {
-    "projectId": "6947e12b003e6ddee54a",
+    "projectId": "694da343001b413bea08",
     "projectName": "DevFlow",
     "settings": {
         "services": {
@@ -50,14 +50,12 @@
             "$id": "appuser",
             "$permissions": [
                 "create(\"any\")",
-                "read(\"any\")",
-                "update(\"any\")",
-                "delete(\"any\")"
+                "read(\"users\")"
             ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "AppUser",
             "enabled": true,
-            "rowSecurity": false,
+            "rowSecurity": true,
             "columns": [
                 {
                     "key": "name",
@@ -215,16 +213,26 @@
         {
             "$id": "question",
             "$permissions": [
-                "create(\"any\")",
                 "read(\"any\")",
-                "update(\"any\")",
-                "delete(\"any\")"
+                "create(\"users\")"
             ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "Question",
             "enabled": true,
-            "rowSecurity": false,
+            "rowSecurity": true,
             "columns": [
+                {
+                    "key": "author",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "appuser",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "questions",
+                    "onDelete": "cascade",
+                    "side": "child"
+                },
                 {
                     "key": "title",
                     "type": "string",
@@ -280,30 +288,6 @@
                     "default": 0
                 },
                 {
-                    "key": "tags",
-                    "type": "relationship",
-                    "required": false,
-                    "array": false,
-                    "relatedTable": "questiontag",
-                    "relationType": "manyToOne",
-                    "twoWay": true,
-                    "twoWayKey": "question",
-                    "onDelete": "setNull",
-                    "side": "child"
-                },
-                {
-                    "key": "author",
-                    "type": "relationship",
-                    "required": false,
-                    "array": false,
-                    "relatedTable": "appuser",
-                    "relationType": "oneToMany",
-                    "twoWay": true,
-                    "twoWayKey": "questions",
-                    "onDelete": "cascade",
-                    "side": "child"
-                },
-                {
                     "key": "answers",
                     "type": "relationship",
                     "required": false,
@@ -338,6 +322,18 @@
                     "twoWayKey": "question",
                     "onDelete": "cascade",
                     "side": "parent"
+                },
+                {
+                    "key": "tags",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "questiontag",
+                    "relationType": "manyToOne",
+                    "twoWay": true,
+                    "twoWayKey": "question",
+                    "onDelete": "setNull",
+                    "side": "child"
                 }
             ],
             "indexes": []
@@ -345,10 +341,9 @@
         {
             "$id": "tag",
             "$permissions": [
-                "create(\"any\")",
                 "read(\"any\")",
-                "update(\"any\")",
-                "delete(\"any\")"
+                "create(\"users\")",
+                "read(\"users\")"
             ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "Tag",
@@ -403,10 +398,10 @@
         {
             "$id": "questiontag",
             "$permissions": [
-                "create(\"any\")",
-                "read(\"any\")",
-                "update(\"any\")",
-                "delete(\"any\")"
+                "create(\"users\")",
+                "read(\"users\")",
+                "delete(\"users\")",
+                "read(\"any\")"
             ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "QuestionsTags",
@@ -443,15 +438,14 @@
         {
             "$id": "answer",
             "$permissions": [
-                "create(\"any\")",
                 "read(\"any\")",
-                "update(\"any\")",
-                "delete(\"any\")"
+                "create(\"users\")",
+                "read(\"users\")"
             ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "Answer",
             "enabled": true,
-            "rowSecurity": false,
+            "rowSecurity": true,
             "columns": [
                 {
                     "key": "author",
@@ -522,15 +516,14 @@
         {
             "$id": "vote",
             "$permissions": [
-                "create(\"any\")",
                 "read(\"any\")",
-                "update(\"any\")",
-                "delete(\"any\")"
+                "create(\"users\")",
+                "read(\"users\")"
             ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "Vote",
             "enabled": true,
-            "rowSecurity": false,
+            "rowSecurity": true,
             "columns": [
                 {
                     "key": "author",
@@ -586,15 +579,13 @@
         {
             "$id": "collection",
             "$permissions": [
-                "create(\"any\")",
-                "read(\"any\")",
-                "update(\"any\")",
-                "delete(\"any\")"
+                "create(\"users\")",
+                "read(\"users\")"
             ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "Collection",
             "enabled": true,
-            "rowSecurity": false,
+            "rowSecurity": true,
             "columns": [
                 {
                     "key": "author",

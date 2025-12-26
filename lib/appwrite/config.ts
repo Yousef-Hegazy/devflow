@@ -16,9 +16,7 @@ export async function createSessionClient() {
     const client = new Client()
         .setEndpoint(appwriteConfig.url)
         .setProject(appwriteConfig.projectId)
-        .setSession(session)
-        // TODO: Remove this in production
-        .setSelfSigned(true);
+        .setSession(session);
 
     return {
         get account() {
@@ -40,9 +38,7 @@ export async function createAdminClient() {
     const client = new Client()
         .setEndpoint(appwriteConfig.url)
         .setProject(appwriteConfig.projectId)
-        .setKey(appwriteConfig.apiKey)
-        // TODO: Remove this in production
-        .setSelfSigned(true);
+        .setKey(appwriteConfig.apiKey);
 
     return {
         get account() {

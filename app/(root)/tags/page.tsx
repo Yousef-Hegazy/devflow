@@ -2,7 +2,7 @@ import DataRenderer from "@/components/DataRenderer";
 import TagCard from "@/components/cards/TagCard";
 import LocalSearch from "@/components/search/LocalSearch";
 import { createAdminClient } from "@/lib/appwrite/config";
-import { Tag } from "@/lib/appwrite/types/appwrite";
+import { Tag } from "@/lib/appwrite/types";
 import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";

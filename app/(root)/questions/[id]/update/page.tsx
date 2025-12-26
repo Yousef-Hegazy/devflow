@@ -1,6 +1,6 @@
 import QuestionForm from "@/components/forms/QuestionForm";
 import { createSessionClient } from "@/lib/appwrite/config";
-import { Question } from "@/lib/appwrite/types/appwrite";
+import { Question } from "@/lib/appwrite/types";
 import { appwriteConfig } from "@/lib/constants/server";
 import { getCurrentUser } from "@/lib/server";
 import { redirect, RedirectType } from "next/navigation";

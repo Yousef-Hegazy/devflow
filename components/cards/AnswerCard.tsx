@@ -1,4 +1,4 @@
-import { Answer } from "@/lib/appwrite/types/appwrite";
+import { Answer } from "@/lib/appwrite/types";
 import Link from "next/link";
 import UserAvatar from "../UserAvatar";
 import { getTimeAgo } from "@/lib/helpers/date";

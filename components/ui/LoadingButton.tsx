@@ -11,6 +11,7 @@ const LoadingButton = ({
   isLoading,
   children,
   wholeLoading = false,
+  onClick,
   ...props
 }: Props) => {
   const lastChild =
@@ -19,7 +20,12 @@ const LoadingButton = ({
       : Children.toArray(children).findLast((el) => el);
 
   return (
-    <Button disabled={isLoading} {...props}>
+    <Button
+      className="transition-all duration-200"
+      disabled={isLoading}
+      onClick={isLoading ? undefined : onClick}
+      {...props}
+    >
       {isLoading && !wholeLoading ? (
         <>
           <Spinner />

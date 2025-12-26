@@ -1,11 +1,12 @@
 "use server";
 
-import { createAdminClient, createSessionClient } from "@/lib/appwrite/config";
-import { Answer, Question, Tag } from "@/lib/appwrite/types/appwrite";
+import { createAdminClient } from "@/lib/appwrite/config";
+import { Answer, Question, Tag } from "@/lib/appwrite/types";
 import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
 import handleError from "@/lib/errors";
+import { getCurrentUser } from "@/lib/server";
 import { AnswerSchemaType, AskQuestionSchema, AskQuestionSchemaType } from "@/lib/validators/questionSchemas";
 import { logger } from "@/pino";
 import { cacheLife, cacheTag, updateTag } from "next/cache";
@@ -275,13 +276,16 @@ export async function increaseViewCount(questionId: string) {
 
 //#region answerQuestion
 export async function answerQuestion(answer: AnswerSchemaType, questionId: string) {
-    const { account } = await createSessionClient();
     const { database } = await createAdminClient();
 
     const tx = await database.createTransaction();
 
     try {
-        const user = await account.get();
+        const user = await getCurrentUser();
+
+        if (!user) {
+            throw new Error("User must be logged in to answer a question.");
+        }
 
         const answerId = ID.unique();
 
@@ -467,3 +471,4 @@ export async function getAnswers({
     }
 }
 //#endregion
+
