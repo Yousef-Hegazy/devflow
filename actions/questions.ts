@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/appwrite/config";
 import { Answer, Question, Tag } from "@/lib/appwrite/types";
-import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
+import { DEFAULT_CACHE_DURATION, HomeFilterType } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
 import handleError from "@/lib/errors";
@@ -11,6 +11,84 @@ import { AnswerSchemaType, AskQuestionSchema, AskQuestionSchemaType } from "@/li
 import { logger } from "@/pino";
 import { cacheLife, cacheTag, updateTag } from "next/cache";
 import { ID, Permission, Query, Role } from "node-appwrite";
+
+
+//#region searchQuestions
+export async function searchQuestions({
+    page = 1,
+    pageSize = 10,
+    query = "",
+    filter = "all",
+}: {
+    page: number;
+    pageSize: number;
+    query?: string;
+    filter?: HomeFilterType;
+}) {
+    "use cache";
+
+    cacheLife({
+        revalidate: DEFAULT_CACHE_DURATION,
+    });
+
+    cacheTag(
+        CACHE_KEYS.QUESTIONS_LIST,
+        String(page),
+        String(pageSize),
+        query,
+        filter,
+    );
+
+    try {
+        const { database } = await createAdminClient();
+
+        const queries = [
+            Query.limit(pageSize),
+            Query.offset((page - 1) * pageSize),
+            Query.select([
+                "*",
+                "author.name",
+                "author.image",
+                "tags.*",
+                "tags.tag.title",
+            ]),
+        ];
+
+        switch (filter) {
+            case "recommended":
+                return { total: 0, rows: [] };
+            case "popular":
+                queries.push(Query.orderDesc("upvotes"));
+                break;
+            case "unanswered":
+                queries.push(Query.equal("answersCount", 0));
+                break;
+            default:
+                queries.push(Query.orderDesc("$createdAt"));
+                break;
+        }
+
+        if (query) {
+            queries.push(Query.contains("title", query));
+        }
+
+        const res = await database.listRows<Question>({
+            databaseId: appwriteConfig.databaseId,
+            tableId: appwriteConfig.questionsTableId,
+            queries,
+        });
+
+        return res;
+    } catch (e) {
+        const error = handleError(e);
+        return {
+            total: 0,
+            rows: [],
+            error: error.message,
+        };
+    }
+};
+//#endregion
 
 //#region createQuestion
 export async function createQuestion(userId: string, data: AskQuestionSchemaType) {
