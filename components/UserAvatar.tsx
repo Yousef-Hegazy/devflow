@@ -2,7 +2,6 @@ import { AppUser } from "@/lib/appwrite/types";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import Image from "next/image";
 
 type Props = {
   user: AppUser;

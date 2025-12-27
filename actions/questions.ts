@@ -1,7 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/appwrite/config";
-import { Answer, Question, Tag } from "@/lib/appwrite/types";
+import { Answer, Collection, Question, Tag } from "@/lib/appwrite/types";
 import { DEFAULT_CACHE_DURATION, HomeFilterType } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
@@ -550,3 +550,70 @@ export async function getAnswers({
 }
 //#endregion
 
+
+//#region saveQuestion
+export async function toggleSaveQuestion(userId: string, questionId: string) {
+    const { database } = await createAdminClient();
+
+    let res = null;
+
+    const existingCollection = await database.listRows<Collection>({
+        databaseId: appwriteConfig.databaseId,
+        tableId: appwriteConfig.collectionsTableId,
+        queries: [
+            Query.equal("author", userId),
+            Query.equal("question", questionId),
+            Query.limit(1),
+        ]
+    });
+
+    if (existingCollection.total > 0) {
+        await database.deleteRow({
+            databaseId: appwriteConfig.databaseId,
+            tableId: appwriteConfig.collectionsTableId,
+            rowId: existingCollection.rows[0].$id,
+        });
+    } else {
+        const collection = await database.createRow({
+            databaseId: appwriteConfig.databaseId,
+            tableId: appwriteConfig.collectionsTableId,
+            rowId: ID.unique(),
+            data: {
+                author: userId,
+                question: questionId,
+            }
+        });
+
+        res = collection.$id;
+    }
+
+    updateTag(CACHE_KEYS.USER_COLLECTIONS + userId);
+
+    return res;
+}
+//#endregion
+
+export async function isQuestionSavedByUser(userId: string, questionId: string) {
+    "use cache";
+
+    cacheLife({
+        revalidate: DEFAULT_CACHE_DURATION,
+    });
+
+    cacheTag(CACHE_KEYS.QUESTION_DETAILS + questionId, CACHE_KEYS.USER_COLLECTIONS + userId);
+
+    const { database } = await createAdminClient();
+
+    const existingCollection = await database.listRows<Collection>({
+        databaseId: appwriteConfig.databaseId,
+        tableId: appwriteConfig.collectionsTableId,
+        queries: [
+            Query.equal("author", userId),
+            Query.equal("question", questionId),
+            Query.limit(1),
+            Query.select(["$id"]),
+        ]
+    });
+
+    return existingCollection.total > 0;
+}

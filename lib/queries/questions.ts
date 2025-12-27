@@ -1,8 +1,9 @@
-import { answerQuestion, createQuestion, updateQuestion } from "@/actions/questions";
+import { answerQuestion, createQuestion, isQuestionSavedByUser, toggleSaveQuestion, updateQuestion } from "@/actions/questions";
 import { toastManager } from "@/components/ui/toast";
 import { logger } from "@/pino";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { CACHE_KEYS } from "../constants/cacheKeys";
 import { client } from "../rpc";
 import { AIAnswerSchemaType, AnswerSchemaType, AskQuestionSchemaType } from "../validators/questionSchemas";
 
@@ -100,4 +101,37 @@ export function useAIAnswer() {
         },
         retry: 0,
     })
+}
+
+
+export function useToggleSaveQuestion() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ userId, questionId }: { userId: string, questionId: string }) => toggleSaveQuestion(userId, questionId),
+        onSuccess: async (res, { userId, questionId }) => {
+            await queryClient.invalidateQueries({ queryKey: [CACHE_KEYS.USER_COLLECTIONS, userId, questionId] });
+
+            toastManager.add({
+                title: res === null ? "Question Removed" : "Question Saved",
+                description: res === null ? "The question has been removed from your collection." : "The question has been saved to your collection.",
+                type: "success",
+            });
+        },
+        onError: (error) => {
+            toastManager.add({
+                title: "Failed to complete action",
+                description: error.message || "An error occurred while performing the action.",
+                type: "error",
+            })
+        }
+    })
+}
+
+export function useIsQuestionSavedByUser({ userId, questionId }: { userId: string, questionId: string }) {
+    return useQuery({
+        queryKey: [CACHE_KEYS.USER_COLLECTIONS, userId, questionId],
+        queryFn: () => isQuestionSavedByUser(userId, questionId),
+        staleTime: 5 * 60 * 1000, // 5 minutes
+    });
 }

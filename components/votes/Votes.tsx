@@ -69,7 +69,7 @@ const Votes = ({
     <Tooltip disabled={!!userId}>
       <TooltipTrigger
         render={
-          <div className="flex-center gap-2.5">
+          <div className="flex-center gap-2">
             <div className="flex-center gap-1.5">
               <LoadingButton
                 isLoading={isUpvoting}

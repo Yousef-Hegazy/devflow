@@ -17,6 +17,7 @@ import { formatNumber } from "@/lib/utils";
 import Link from "next/link";
 import { Suspense } from "react";
 import AnswersList from "./AnswersList";
+import ToggleSaveQuestionBtn from "./ToggleSaveQuestionBtn";
 import UserQuestionVotes from "./UserQuestionVotes";
 
 type Props = {
@@ -61,7 +62,7 @@ const QuestionDetailsPage = async ({ params }: Props) => {
                 </Link>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
                 {user?.$id === question.author.$id ? (
                   <Button
                     className="primary-gradient text-light-900 w-fit border-0 py-3"
@@ -94,6 +95,13 @@ const QuestionDetailsPage = async ({ params }: Props) => {
                     />
                   )}
                 </Suspense>
+
+                {user?.$id && user.$id !== question.author.$id ? (
+                  <ToggleSaveQuestionBtn
+                    questionId={question.$id}
+                    userId={user.$id}
+                  />
+                ) : null}
               </div>
             </div>
 
