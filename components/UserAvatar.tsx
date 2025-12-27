@@ -2,6 +2,7 @@ import { AppUser } from "@/lib/appwrite/types";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import Image from "next/image";
 
 type Props = {
   user: AppUser;
@@ -28,16 +29,16 @@ const UserAvatar = ({ user, classNames }: Props) => {
           width={36}
           height={36}
           className={cn("object-cover", classNames?.image)}
-          //   render={
-          //     <Image
-          //       src={user.image || "/icons/avatar.svg"}
-          //       alt={user.name}
-          //       width={36}
-          //       height={36}
-          //       quality={100}
-          //       className={cn("object-cover", classNames?.image)}
-          //     />
-          //   }
+          // render={
+          //   <Image
+          //     src={user.image || "/icons/avatar.svg"}
+          //     alt={user.name}
+          //     width={36}
+          //     height={36}
+          //     quality={100}
+          //     className={cn("object-cover", classNames?.image)}
+          //   />
+          // }
         />
 
         <AvatarFallback

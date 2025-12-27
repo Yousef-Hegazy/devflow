@@ -9,17 +9,19 @@ import handleError from "@/lib/errors";
 import { cacheLife, cacheTag } from "next/cache";
 import { Query } from "node-appwrite";
 
-export async function searchUsers({
-    page = 1,
-    pageSize = 10,
-    query = "",
-    filter = "all",
-}: {
+export type SearchUsersParams = {
     page: number;
     pageSize: number;
     query?: string;
     filter?: "all" | "popular" | "newest";
-}) {
+};
+
+export async function searchUsers({
+    page = 1,
+    pageSize = 10,
+    query = "",
+    filter = "all"
+}: SearchUsersParams) {
     "use cache";
 
     cacheLife({
