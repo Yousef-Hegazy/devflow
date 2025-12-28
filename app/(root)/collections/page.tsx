@@ -2,7 +2,7 @@ import QuestionCard from "@/components/cards/QuestionCard";
 import DataRenderer from "@/components/DataRenderer";
 import HomeFilter from "@/components/filters/HomeFilter";
 import LocalSearch from "@/components/search/LocalSearch";
-import { EMPTY_COLLECTIONS, EMPTY_QUESTION } from "@/lib/constants/states";
+import { EMPTY_COLLECTIONS } from "@/lib/constants/states";
 
 import { searchUserCollections } from "@/actions/questions";
 import { CollectionFilterType } from "@/lib/models";
