@@ -48,7 +48,6 @@ export const homeFilters = [
   { name: "Recommended", value: "recommended" },
 ] as const;
 
-export type HomeFilterType = typeof homeFilters[number]["value"];
 
 export const techMap: { [key: string]: string } = {
   javascript: "devicon-javascript-plain",

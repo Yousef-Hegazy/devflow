@@ -4,8 +4,8 @@ import DataRenderer from "@/components/DataRenderer";
 import HomeFilter from "@/components/filters/HomeFilter";
 import LocalSearch from "@/components/search/LocalSearch";
 import { Button } from "@/components/ui/button";
-import { HomeFilterType } from "@/lib/constants";
 import { EMPTY_QUESTION } from "@/lib/constants/states";
+import { HomeFilterType } from "@/lib/models";
 import Link from "next/link";
 
 interface Props {

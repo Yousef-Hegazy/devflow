@@ -2,10 +2,11 @@
 
 import { createAdminClient } from "@/lib/appwrite/config";
 import { Answer, Collection, Question, Tag } from "@/lib/appwrite/types";
-import { DEFAULT_CACHE_DURATION, HomeFilterType } from "@/lib/constants";
+import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
 import handleError from "@/lib/errors";
+import { CollectionFilterType, HomeFilterType, PaginationParams } from "@/lib/models";
 import { getCurrentUser } from "@/lib/server";
 import { AnswerSchemaType, AskQuestionSchema, AskQuestionSchemaType } from "@/lib/validators/questionSchemas";
 import { logger } from "@/pino";
@@ -20,11 +21,8 @@ export async function searchQuestions({
     query = "",
     filter = "all",
 }: {
-    page: number;
-    pageSize: number;
-    query?: string;
     filter?: HomeFilterType;
-}) {
+} & PaginationParams) {
     "use cache";
 
     cacheLife({
@@ -33,10 +31,10 @@ export async function searchQuestions({
 
     cacheTag(
         CACHE_KEYS.QUESTIONS_LIST,
-        String(page),
-        String(pageSize),
-        query,
-        filter,
+        CACHE_KEYS.QUESTIONS_LIST + String(page) +
+        String(pageSize) +
+        query +
+        filter
     );
 
     try {
@@ -69,7 +67,10 @@ export async function searchQuestions({
         }
 
         if (query) {
-            queries.push(Query.contains("title", query));
+            queries.push(Query.or([
+                Query.contains("title", query),
+                Query.contains("content", query),
+            ]));
         }
 
         const res = await database.listRows<Question>({
@@ -593,6 +594,7 @@ export async function toggleSaveQuestion(userId: string, questionId: string) {
 }
 //#endregion
 
+//#region isQuestionSavedByUser
 export async function isQuestionSavedByUser(userId: string, questionId: string) {
     "use cache";
 
@@ -617,3 +619,96 @@ export async function isQuestionSavedByUser(userId: string, questionId: string) 
 
     return existingCollection.total > 0;
 }
+//#endregion
+
+//#region getUserCollections
+export async function searchUserCollections({ userId, page = 1, pageSize = 10, query = "", filter = "mostrecent" }: { userId: string, filter?: CollectionFilterType } & PaginationParams) {
+    "use cache";
+
+    cacheLife({
+        revalidate: DEFAULT_CACHE_DURATION,
+    });
+
+    // include pagination and search query in cache tag so different pages/queries are cached separately
+    cacheTag(CACHE_KEYS.USER_COLLECTIONS + userId, CACHE_KEYS.USER_COLLECTIONS + userId + String(page) + String(pageSize) + query + filter);
+
+    try {
+        const { database } = await createAdminClient();
+
+        const collectionQueries = [
+            Query.limit(pageSize),
+            Query.offset((page - 1) * pageSize),
+            Query.equal("author", userId),
+            Query.select(["*"])
+        ]
+
+        const questionQueries: string[] = [
+            Query.select([
+                "*",
+                "author.name",
+                "author.image",
+                "tags.*",
+                "tags.tag.title",
+                "collection.$id"
+            ]),
+        ];
+
+        switch (filter) {
+            case "mostvoted":
+                questionQueries.push(Query.orderDesc("upvotes"));
+                break;
+            case "mostviewed":
+                questionQueries.push(Query.orderDesc("views"));
+                break;
+            case "mostanswered":
+                questionQueries.push(Query.orderDesc("answersCount"));
+                break;
+            case "oldest":
+                collectionQueries.push(Query.orderAsc("$createdAt"));
+                break;
+            case "mostrecent":
+                collectionQueries.push(Query.orderDesc("$createdAt"));
+                break;
+        }
+
+        if (query) {
+            collectionQueries.push(Query.or([
+                Query.contains("question.title", query),
+                Query.contains("question.content", query),
+            ]));
+        }
+
+        const collections = await database.listRows<Collection>({
+            databaseId: appwriteConfig.databaseId,
+            tableId: appwriteConfig.collectionsTableId,
+            queries: collectionQueries,
+        });
+
+        if (collections.total === 0) {
+            return {
+                total: 0,
+                rows: [],
+            };
+        }
+
+        const collectionIds = collections.rows.map(c => c.$id);
+
+        questionQueries.push(Query.equal("collection.$id", collectionIds));
+
+        const res = await database.listRows<Question>({
+            databaseId: appwriteConfig.databaseId,
+            tableId: appwriteConfig.questionsTableId,
+            queries: questionQueries,
+        });
+
+        return res;
+    } catch (e) {
+        const error = handleError(e);
+        return {
+            total: 0,
+            rows: [],
+            error: error.message,
+        };
+    }
+}
+//#endregion

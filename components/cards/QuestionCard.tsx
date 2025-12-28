@@ -9,7 +9,16 @@ type Props = {
 };
 
 const QuestionCard = ({
-  question: { $id, title, tags, author, $createdAt, upvotes, answersCount, views },
+  question: {
+    $id,
+    title,
+    tags,
+    author,
+    $createdAt,
+    upvotes,
+    answersCount,
+    views,
+  },
 }: Props) => {
   const timeAgo = getTimeAgo(new Date($createdAt));
 
@@ -30,15 +39,17 @@ const QuestionCard = ({
       </div>
 
       <div className="mt-3.5 flex w-full flex-wrap gap-2">
-        {tags.map((tag) => (
-          <TagCard
-            key={tag.$id}
-            $id={tag.tag.$id}
-            name={tag.tag.title}
-            showCount={false}
-            compact
-          />
-        ))}
+        {tags && tags.length > 0
+          ? tags.map((tag) => (
+              <TagCard
+                key={tag.$id}
+                $id={tag.tag.$id}
+                name={tag.tag.title}
+                showCount={false}
+                compact
+              />
+            ))
+          : null}
       </div>
 
       <div className="flex-between mt-6 w-full flex-wrap gap-3">
@@ -62,9 +73,8 @@ const QuestionCard = ({
             title=" Votes"
             classNames={{
               text: "small-medium text-dark400_light800",
-              title: "max-sm:hidden"
+              title: "max-sm:hidden",
             }}
-
           />
 
           <Metric
@@ -74,7 +84,7 @@ const QuestionCard = ({
             title=" Answers"
             classNames={{
               text: "small-medium text-dark400_light800",
-              title: "max-sm:hidden"
+              title: "max-sm:hidden",
             }}
           />
 
@@ -85,7 +95,7 @@ const QuestionCard = ({
             title=" Views"
             classNames={{
               text: "small-medium text-dark400_light800",
-              title: "max-sm:hidden"
+              title: "max-sm:hidden",
             }}
           />
         </div>
