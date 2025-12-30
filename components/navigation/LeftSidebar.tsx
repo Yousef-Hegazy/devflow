@@ -1,4 +1,4 @@
-import { AppUser } from "@/lib/appwrite/types";
+import { AppUser } from "@/lib/types/appwrite";
 import { logout } from "@/actions/auth";
 import { LogOut } from "lucide-react";
 import Image from "next/image";

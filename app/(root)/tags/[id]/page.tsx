@@ -2,7 +2,7 @@ import QuestionCard from "@/components/cards/QuestionCard";
 import DataRenderer from "@/components/DataRenderer";
 import LocalSearch from "@/components/search/LocalSearch";
 import { createAdminClient } from "@/lib/appwrite/config";
-import { Question, Tag } from "@/lib/appwrite/types";
+import { Question, Tag } from "@/lib/types/appwrite";
 import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";

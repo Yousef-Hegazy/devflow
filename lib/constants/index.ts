@@ -41,12 +41,6 @@ export const sidebarLinks = [
   },
 ];
 
-export const homeFilters = [
-  { name: "All", value: "all" },
-  { name: "Popular", value: "popular" },
-  { name: "Unanswered", value: "unanswered" },
-  { name: "Recommended", value: "recommended" },
-] as const;
 
 
 export const techMap: { [key: string]: string } = {

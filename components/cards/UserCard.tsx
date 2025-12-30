@@ -1,4 +1,4 @@
-import { AppUser } from "@/lib/appwrite/types";
+import { AppUser } from "@/lib/types/appwrite";
 import Link from "next/link";
 import UserAvatar from "../UserAvatar";
 

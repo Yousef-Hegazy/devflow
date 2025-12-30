@@ -1,4 +1,4 @@
-import { AppUser } from "@/lib/appwrite/types";
+import { AppUser } from "@/lib/types/appwrite";
 import { create, StateCreator } from "zustand";
 
 type AuthState = {

@@ -1,5 +1,5 @@
 import UserAnswerVotes from "@/app/(root)/questions/[id]/UserAnswerVotes";
-import { Answer } from "@/lib/appwrite/types";
+import { Answer } from "@/lib/types/appwrite";
 import { getTimeAgo } from "@/lib/helpers/date";
 import Link from "next/link";
 import { Suspense } from "react";

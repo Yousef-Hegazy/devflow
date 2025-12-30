@@ -1,7 +1,7 @@
 "use server";
 
 import { createAdminClient, createClient } from "@/lib/appwrite/config";
-import { AppUser } from "@/lib/appwrite/types";
+import { AppUser } from "@/lib/types/appwrite";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
 import { getAppwriteInitialsAvatarUrl } from "@/lib/server";

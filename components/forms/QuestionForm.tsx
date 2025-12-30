@@ -1,6 +1,6 @@
 "use client";
 
-import { Question } from "@/lib/appwrite/types";
+import { Question } from "@/lib/types/appwrite";
 import { useCreateQuestion, useUpdateQuestion } from "@/lib/queries/questions";
 import {
   AskQuestionSchema,

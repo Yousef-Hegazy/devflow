@@ -13,6 +13,9 @@ import Votes from "@/components/votes/Votes";
 import { EMPTY_QUESTION } from "@/lib/constants/states";
 import { getTimeAgo } from "@/lib/helpers/date";
 import { getCurrentUser } from "@/lib/server";
+import type { Question } from "@/lib/types/appwrite";
+import { AnswersFilterType } from "@/lib/types/filters";
+import { PaginationSearchParams } from "@/lib/types/pagination";
 import { formatNumber } from "@/lib/utils";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -24,10 +27,11 @@ type Props = {
   params: Promise<{
     id: string;
   }>;
+  searchParams: Promise<PaginationSearchParams<AnswersFilterType>>;
 };
 
-const QuestionDetailsPage = async ({ params }: Props) => {
-  const { id } = await params;
+const QuestionDetailsPage = async ({ params, searchParams }: Props) => {
+  const [{ id }, sp] = await Promise.all([params, searchParams]);
   const [user, question, views] = await Promise.all([
     getCurrentUser(),
     getQuestionDetails(id),
@@ -35,7 +39,7 @@ const QuestionDetailsPage = async ({ params }: Props) => {
   ]);
 
   return (
-    <DataRenderer
+    <DataRenderer<Question>
       error={!question ? { message: "Question not found." } : undefined}
       empty={EMPTY_QUESTION}
       data={question ? [question] : undefined}
@@ -151,7 +155,7 @@ const QuestionDetailsPage = async ({ params }: Props) => {
           </div>
 
           <Suspense fallback={<Loading />} key={question.$id}>
-            <AnswersList questionId={id} userId={user?.$id} />
+            <AnswersList questionId={id} userId={user?.$id} searchParams={sp} />
           </Suspense>
 
           <section className="my-5">

@@ -1,11 +1,12 @@
 "use server";
 
 import { createAdminClient } from "@/lib/appwrite/config";
-import { AppUser } from "@/lib/appwrite/types";
 import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
 import handleError from "@/lib/errors";
+import { AppUser } from "@/lib/types/appwrite";
+import { UsersFilterType } from "@/lib/types/filters";
 import { cacheLife, cacheTag } from "next/cache";
 import { Query } from "node-appwrite";
 
@@ -13,14 +14,14 @@ export type SearchUsersParams = {
     page: number;
     pageSize: number;
     query?: string;
-    filter?: "all" | "popular" | "newest";
+    filter?: UsersFilterType;
 };
 
 export async function searchUsers({
     page = 1,
     pageSize = 10,
     query = "",
-    filter = "all"
+    filter = "newest"
 }: SearchUsersParams) {
     "use cache";
 
@@ -30,9 +31,9 @@ export async function searchUsers({
 
     cacheTag(
         CACHE_KEYS.USERS_LIST,
-        String(page),
-        String(pageSize),
-        query,
+        CACHE_KEYS.USERS_LIST + String(page) +
+        String(pageSize) +
+        query +
         filter,
     );
 
@@ -49,8 +50,10 @@ export async function searchUsers({
             case "popular":
                 queries.push(Query.orderDesc("reputation"));
                 break;
+            case "oldest":
+                queries.push(Query.orderAsc("$createdAt"));
+                break;
             case "newest":
-            case "all":
             default:
                 queries.push(Query.orderDesc("$createdAt"));
                 break;

@@ -1,13 +1,14 @@
 "use server";
 
 import { createAdminClient } from "@/lib/appwrite/config";
-import { Answer, Collection, Question, Tag } from "@/lib/appwrite/types";
 import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
 import handleError from "@/lib/errors";
-import { CollectionFilterType, HomeFilterType, PaginationParams } from "@/lib/models";
 import { getCurrentUser } from "@/lib/server";
+import { Answer, Collection, Question, Tag } from "@/lib/types/appwrite";
+import { AnswersFilterType, CollectionFilterType, HomeFilterType } from "@/lib/types/filters";
+import { PaginationParams } from "@/lib/types/pagination";
 import { AnswerSchemaType, AskQuestionSchema, AskQuestionSchemaType } from "@/lib/validators/questionSchemas";
 import { logger } from "@/pino";
 import { cacheLife, cacheTag, updateTag } from "next/cache";
@@ -20,9 +21,7 @@ export async function searchQuestions({
     pageSize = 10,
     query = "",
     filter = "all",
-}: {
-    filter?: HomeFilterType;
-} & PaginationParams) {
+}: PaginationParams<HomeFilterType>) {
     "use cache";
 
     cacheLife({
@@ -487,12 +486,12 @@ export async function getAnswers({
     questionId,
     page = 1,
     pageSize = 10,
-    filter = "default",
+    filter = "latest",
 }: {
     questionId: string;
     page?: number;
     pageSize?: number;
-    filter?: "latest" | "oldest" | "popular" | "default";
+    filter?: AnswersFilterType;
 }) {
     "use cache";
 
@@ -502,8 +501,8 @@ export async function getAnswers({
 
     cacheTag(
         CACHE_KEYS.QUESTION_ANSWERS + questionId,
-        String(page),
-        String(pageSize),
+        CACHE_KEYS.QUESTION_ANSWERS + questionId + String(page) +
+        String(pageSize) +
         filter,
     );
 
@@ -622,7 +621,7 @@ export async function isQuestionSavedByUser(userId: string, questionId: string) 
 //#endregion
 
 //#region getUserCollections
-export async function searchUserCollections({ userId, page = 1, pageSize = 10, query = "", filter = "mostrecent" }: { userId: string, filter?: CollectionFilterType } & PaginationParams) {
+export async function searchUserCollections({ userId, page = 1, pageSize = 10, query = "", filter = "mostrecent" }: { userId: string, } & PaginationParams<CollectionFilterType>) {
     "use cache";
 
     cacheLife({
@@ -630,7 +629,7 @@ export async function searchUserCollections({ userId, page = 1, pageSize = 10, q
     });
 
     // include pagination and search query in cache tag so different pages/queries are cached separately
-    cacheTag(CACHE_KEYS.USER_COLLECTIONS + userId, CACHE_KEYS.USER_COLLECTIONS + userId + String(page) + String(pageSize) + query + filter);
+    cacheTag(CACHE_KEYS.USER_COLLECTIONS + userId, CACHE_KEYS.USER_COLLECTIONS + userId + String(filter) + String(query) + String(page) + String(pageSize));
 
     try {
         const { database } = await createAdminClient();

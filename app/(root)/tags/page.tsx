@@ -1,32 +1,39 @@
 import DataRenderer from "@/components/DataRenderer";
 import TagCard from "@/components/cards/TagCard";
+import CommonFilter from "@/components/filters/CommonFilter";
 import LocalSearch from "@/components/search/LocalSearch";
 import { createAdminClient } from "@/lib/appwrite/config";
-import { Tag } from "@/lib/appwrite/types";
 import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
+import { tagFilters } from "@/lib/constants/filters";
 import { appwriteConfig } from "@/lib/constants/server";
 import { EMPTY_TAGS } from "@/lib/constants/states";
 import handleError from "@/lib/errors";
+import { Tag } from "@/lib/types/appwrite";
+import { TagsFilterType } from "@/lib/types/filters";
+import {
+  PaginationParams,
+  PaginationSearchParams,
+} from "@/lib/types/pagination";
 import { cacheLife, cacheTag } from "next/cache";
 import { Query } from "node-appwrite";
 
-const getTags = async ({
+const searchTags = async ({
   page = 1,
   pageSize = 10,
   query = "",
-}: {
-  page: number;
-  pageSize: number;
-  query?: string;
-}) => {
+  filter = "popular",
+}: PaginationParams<TagsFilterType>) => {
   "use cache";
 
   cacheLife({
     revalidate: DEFAULT_CACHE_DURATION,
   });
 
-  cacheTag(CACHE_KEYS.TAGS_LIST, String(page), String(pageSize), query);
+  cacheTag(
+    CACHE_KEYS.TAGS_LIST,
+    CACHE_KEYS.TAGS_LIST + String(page) + String(pageSize) + query + filter,
+  );
 
   try {
     const { database } = await createAdminClient();
@@ -39,6 +46,22 @@ const getTags = async ({
 
     if (query) {
       queries.push(Query.contains("title", query));
+    }
+
+    switch (filter) {
+      case "name":
+        queries.push(Query.orderAsc("title"));
+        break;
+      case "popular":
+        queries.push(Query.orderDesc("questionsCount"));
+        break;
+      case "oldest":
+        queries.push(Query.orderAsc("$createdAt"));
+        break;
+      case "recent":
+      default:
+        queries.push(Query.orderDesc("$createdAt"));
+        break;
     }
 
     const res = await database.listRows<Tag>({
@@ -60,19 +83,17 @@ const getTags = async ({
 };
 
 interface Props {
-  searchParams: Promise<{
-    q?: string;
-    page?: string;
-    pageSize?: string;
-  }>;
+  searchParams: Promise<PaginationSearchParams<TagsFilterType>>;
 }
 
 export default async function TagsPage({ searchParams }: Props) {
-  const { q, page, pageSize } = await searchParams;
-  const tags = await getTags({
-    page: Number(page) || 1,
-    pageSize: Number(pageSize) || 50,
+  const sp = await searchParams;
+  const { q, p, ps } = sp;
+  const tags = await searchTags({
+    page: Number(p) || 1,
+    pageSize: Number(ps) || 50,
     query: q?.toLowerCase() || "",
+    filter: sp.filter,
   });
 
   return (
@@ -91,8 +112,16 @@ export default async function TagsPage({ searchParams }: Props) {
         )}
       </h1>
 
-      <section className="mt-11">
+      <section className="mt-11 flex flex-row justify-between gap-5 max-sm:flex-col sm:items-center">
         <LocalSearch placeholder="Search Tags..." />
+
+        <CommonFilter
+          filters={tagFilters}
+          searchParams={sp}
+          classNames={{
+            trigger: "min-h-[56px] sm:min-w-[170px]",
+          }}
+        />
       </section>
 
       <DataRenderer

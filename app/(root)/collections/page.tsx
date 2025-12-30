@@ -1,12 +1,13 @@
 import QuestionCard from "@/components/cards/QuestionCard";
 import DataRenderer from "@/components/DataRenderer";
-import HomeFilter from "@/components/filters/HomeFilter";
 import LocalSearch from "@/components/search/LocalSearch";
 import { EMPTY_COLLECTIONS } from "@/lib/constants/states";
 
 import { searchUserCollections } from "@/actions/questions";
-import { CollectionFilterType } from "@/lib/models";
+import CommonFilter from "@/components/filters/CommonFilter";
+import { collectionFilters } from "@/lib/constants/filters";
 import { getCurrentUser } from "@/lib/server";
+import { CollectionFilterType } from "@/lib/types/filters";
 import { redirect } from "next/navigation";
 
 interface Props {
@@ -19,10 +20,9 @@ interface Props {
 }
 
 const CollectionsPage = async ({ searchParams }: Props) => {
-  const [{ q, filter, page, pageSize }, user] = await Promise.all([
-    searchParams,
-    getCurrentUser(),
-  ]);
+  const [sp, user] = await Promise.all([searchParams, getCurrentUser()]);
+
+  const { q, filter, page, pageSize } = sp;
 
   if (!user || !user.$id) {
     redirect("/login");
@@ -50,10 +50,22 @@ const CollectionsPage = async ({ searchParams }: Props) => {
           Ask a Question
         </Button> */}
       </section>
-      <section className="mt-11">
-        <LocalSearch placeholder="Search Questions..." />
+      <section className="mt-11 flex flex-row justify-between gap-5 max-sm:flex-col sm:items-center">
+        <LocalSearch
+          placeholder="Search Questions..."
+          classNames={{
+            container: "flex-1",
+          }}
+        />
+
+        <CommonFilter
+          filters={collectionFilters}
+          searchParams={sp}
+          classNames={{
+            trigger: "min-h-[56px] sm:min-w-[170px]",
+          }}
+        />
       </section>
-      <HomeFilter />
       <div className="mt-5 flex w-full flex-col gap-6">
         <DataRenderer
           success={!isError}

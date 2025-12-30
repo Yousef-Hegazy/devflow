@@ -1,7 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/appwrite/config";
-import { Vote, VoteType } from "@/lib/appwrite/types";
+import { Vote, VoteType } from "@/lib/types/appwrite";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
 import { getCurrentUser } from "@/lib/server";

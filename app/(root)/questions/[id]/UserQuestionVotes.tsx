@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import Votes from "@/components/votes/Votes";
 import { createAdminClient } from "@/lib/appwrite/config";
-import { Vote } from "@/lib/appwrite/types";
+import { Vote } from "@/lib/types/appwrite";
 import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";

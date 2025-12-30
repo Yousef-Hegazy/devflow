@@ -1,6 +1,6 @@
 "use client";
 
-import { AppUser } from "@/lib/appwrite/types";
+import { AppUser } from "@/lib/types/appwrite";
 import useAuthStore from "@/stores/authStore";
 import { useEffect, useEffectEvent } from "react";
 
