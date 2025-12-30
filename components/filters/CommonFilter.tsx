@@ -21,11 +21,20 @@ type Props<T extends { filter?: string }> = {
 const CommonFilter = <T extends { filter?: string }>({
   filters,
   classNames,
-  searchParams,
+  searchParams: sp,
 }: Props<T>) => {
-  const activeFilterKey = searchParams?.filter as string;
+  const searchParams = qs.parse(
+    qs.stringify(sp, {
+      skipEmptyString: true,
+      skipNull: true,
+    }),
+    {
+      parseBooleans: true,
+      parseNumbers: true,
+    },
+  ) as { [key: string]: string };
+  const activeFilterKey = searchParams?.filter || "";
   const filter = filters.find((f) => f.value === activeFilterKey);
-  const queries = qs.parse(searchParams.toString());
 
   return (
     <div className={cn("relative", classNames?.container)}>
@@ -49,7 +58,15 @@ const CommonFilter = <T extends { filter?: string }>({
                 <Link
                   replace
                   scroll={false}
-                  href={`?${qs.stringify({ ...queries, filter: filter.value }, { skipNull: true, skipEmptyString: true })}`}
+                  href={{
+                    pathname: "",
+                    query: {
+                      ...Object.assign(searchParams || {}, {
+                        filter: filter.value,
+                        p: 1,
+                      }),
+                    },
+                  }}
                 />
               }
               key={filter.value}

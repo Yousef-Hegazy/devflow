@@ -5,24 +5,21 @@ import { EMPTY_COLLECTIONS } from "@/lib/constants/states";
 
 import { searchUserCollections } from "@/actions/questions";
 import CommonFilter from "@/components/filters/CommonFilter";
+import AppPagination from "@/components/navigation/AppPagination";
 import { collectionFilters } from "@/lib/constants/filters";
 import { getCurrentUser } from "@/lib/server";
 import { CollectionFilterType } from "@/lib/types/filters";
+import { PaginationSearchParams } from "@/lib/types/pagination";
 import { redirect } from "next/navigation";
 
 interface Props {
-  searchParams: Promise<{
-    q?: string;
-    filter?: CollectionFilterType;
-    page?: string;
-    pageSize?: string;
-  }>;
+  searchParams: Promise<PaginationSearchParams<CollectionFilterType>>;
 }
 
 const CollectionsPage = async ({ searchParams }: Props) => {
   const [sp, user] = await Promise.all([searchParams, getCurrentUser()]);
 
-  const { q, filter, page, pageSize } = sp;
+  const { q, filter, p, ps } = sp;
 
   if (!user || !user.$id) {
     redirect("/login");
@@ -30,8 +27,8 @@ const CollectionsPage = async ({ searchParams }: Props) => {
 
   const questions = await searchUserCollections({
     userId: user.$id,
-    page: Number(page) || 1,
-    pageSize: Number(pageSize) || 10,
+    page: Number(p) || 1,
+    pageSize: Number(ps) || 10,
     query: q?.toLowerCase() || "",
     filter,
   });
@@ -42,14 +39,8 @@ const CollectionsPage = async ({ searchParams }: Props) => {
     <>
       <section className="flex w-full flex-col-reverse justify-between gap-4 sm:flex-row sm:items-center">
         <h1 className="h1-bold text-dark100_light900">Saved Questions</h1>
-
-        {/* <Button
-          render={<Link href="/ask-question" />}
-          className="primary-gradient! text-light-900! min-h-11.5! border-0! px-4! py-3!"
-        >
-          Ask a Question
-        </Button> */}
       </section>
+      
       <section className="mt-11 flex flex-row justify-between gap-5 max-sm:flex-col sm:items-center">
         <LocalSearch
           placeholder="Search Questions..."
@@ -80,6 +71,15 @@ const CollectionsPage = async ({ searchParams }: Props) => {
             </>
           )}
         />
+
+        {/* Pagination */}
+        <div className="mt-10 flex w-full justify-center">
+          <AppPagination
+            page={Number(p) || 1}
+            totalItems={"error" in questions ? 1 : questions.total}
+            pageSize={Number(ps) || 10}
+          />
+        </div>
       </div>
     </>
   );

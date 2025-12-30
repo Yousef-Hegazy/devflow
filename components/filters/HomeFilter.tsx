@@ -5,12 +5,22 @@ import qs from "query-string";
 import { Button } from "../ui/button";
 
 const HomeFilter = ({
-  searchParams,
+  searchParams: sp,
 }: {
   searchParams: { [key: string]: string };
 }) => {
+  const searchParams = qs.parse(
+    qs.stringify(sp, {
+      skipEmptyString: true,
+      skipNull: true,
+    }),
+    {
+      parseBooleans: true,
+      parseNumbers: true,
+    },
+  ) as { [key: string]: string };
+
   const activeFilter = searchParams?.filter || "all";
-  const queries = qs.parse(searchParams.toString());
 
   return (
     <div className="mt-10 hidden flex-wrap gap-3 md:flex">
@@ -20,7 +30,15 @@ const HomeFilter = ({
             <Link
               replace
               scroll={false}
-              href={`?${qs.stringify({ ...queries, filter: filter.value }, { skipEmptyString: true, skipNull: true })}`}
+              href={{
+                pathname: "",
+                query: {
+                  ...Object.assign(searchParams || {}, {
+                    filter: filter.value,
+                    p: 1,
+                  }),
+                },
+              }}
             />
           }
           key={filter.value}

@@ -1,6 +1,7 @@
 import DataRenderer from "@/components/DataRenderer";
 import TagCard from "@/components/cards/TagCard";
 import CommonFilter from "@/components/filters/CommonFilter";
+import AppPagination from "@/components/navigation/AppPagination";
 import LocalSearch from "@/components/search/LocalSearch";
 import { createAdminClient } from "@/lib/appwrite/config";
 import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
@@ -113,7 +114,12 @@ export default async function TagsPage({ searchParams }: Props) {
       </h1>
 
       <section className="mt-11 flex flex-row justify-between gap-5 max-sm:flex-col sm:items-center">
-        <LocalSearch placeholder="Search Tags..." />
+        <LocalSearch
+          placeholder="Search Tags..."
+          classNames={{
+            container: "flex-1",
+          }}
+        />
 
         <CommonFilter
           filters={tagFilters}
@@ -144,6 +150,15 @@ export default async function TagsPage({ searchParams }: Props) {
           </div>
         )}
       />
+
+      {/* Pagination */}
+      <div className="mt-10 flex w-full justify-center">
+        <AppPagination
+          page={Number(p) || 1}
+          totalItems={"error" in tags ? 1 : tags.total}
+          pageSize={Number(ps) || 50}
+        />
+      </div>
     </>
   );
 }

@@ -2,6 +2,7 @@ import { getAnswers } from "@/actions/questions";
 import AnswerCard from "@/components/cards/AnswerCard";
 import DataRenderer from "@/components/DataRenderer";
 import CommonFilter from "@/components/filters/CommonFilter";
+import AppPagination from "@/components/navigation/AppPagination";
 import { answerFilters } from "@/lib/constants/filters";
 import { EMPTY_ANSWERS } from "@/lib/constants/states";
 import { AnswersFilterType } from "@/lib/types/filters";
@@ -36,6 +37,7 @@ const AnswersList = async ({ questionId, userId, searchParams }: Props) => {
           }}
         />
       </div>
+      
       <DataRenderer
         data={"error" in answersRes ? [] : [answersRes]}
         empty={EMPTY_ANSWERS}
@@ -49,6 +51,15 @@ const AnswersList = async ({ questionId, userId, searchParams }: Props) => {
           ))
         }
       />
+
+      {/* Pagination */}
+      <div className="mt-10 flex w-full justify-center">
+        <AppPagination
+          page={Number(searchParams.p) || 1}
+          totalItems={"error" in answersRes ? 1 : answersRes.total}
+          pageSize={Number(searchParams.ps) || 50}
+        />
+      </div>
     </section>
   );
 };

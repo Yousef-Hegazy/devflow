@@ -3,6 +3,7 @@ import QuestionCard from "@/components/cards/QuestionCard";
 import DataRenderer from "@/components/DataRenderer";
 import CommonFilter from "@/components/filters/CommonFilter";
 import HomeFilter from "@/components/filters/HomeFilter";
+import AppPagination from "@/components/navigation/AppPagination";
 import LocalSearch from "@/components/search/LocalSearch";
 import { Button } from "@/components/ui/button";
 import { homeFilters } from "@/lib/constants/filters";
@@ -71,6 +72,15 @@ export default async function Home({ searchParams }: Props) {
               ))}
             </>
           )}
+        />
+      </div>
+
+      {/* Pagination */}
+      <div className="mt-10 flex w-full justify-center">
+        <AppPagination
+          page={Number(p) || 1}
+          totalItems={"error" in questions ? 1 : questions.total}
+          pageSize={Number(ps) || 10}
         />
       </div>
     </>
