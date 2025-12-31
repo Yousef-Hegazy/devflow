@@ -1,11 +1,11 @@
 "use server";
 
 import { createAdminClient } from "@/lib/appwrite/config";
-import { Vote, VoteType } from "@/lib/types/appwrite";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
 import { getCurrentUser } from "@/lib/server";
-import { revalidateTag, updateTag } from "next/cache";
+import { Vote, VoteType } from "@/lib/types/appwrite";
+import { updateTag } from "next/cache";
 import { ID, Permission, Query, Role } from "node-appwrite";
 
 
@@ -137,7 +137,7 @@ export async function upvoteQuestion(questionId: string) {
             });
 
             updateTag(CACHE_KEYS.QUESTION_DETAILS + questionId);
-            revalidateTag(CACHE_KEYS.QUESTIONS_LIST, "max");
+            updateTag(CACHE_KEYS.QUESTIONS_LIST);
             // updateTag(CACHE_KEYS.USER_QUESTION_VOTE + user.$id + questionId);
 
             return { success: true };
@@ -282,7 +282,7 @@ export async function downvoteQuestion(questionId: string) {
             });
 
             updateTag(CACHE_KEYS.QUESTION_DETAILS + questionId);
-            revalidateTag(CACHE_KEYS.QUESTIONS_LIST, "max");
+            updateTag(CACHE_KEYS.QUESTIONS_LIST);
             // updateTag(CACHE_KEYS.USER_QUESTION_VOTE + user.$id + questionId);
 
             return { success: true };

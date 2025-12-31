@@ -39,6 +39,7 @@ export default async function Home({ searchParams }: Props) {
           Ask a Question
         </Button>
       </section>
+      
       <section className="mt-11 flex justify-between gap-5 max-sm:flex-col sm:items-center">
         <LocalSearch
           placeholder="Search Questions..."
@@ -56,7 +57,9 @@ export default async function Home({ searchParams }: Props) {
           }}
         />
       </section>
+
       <HomeFilter searchParams={sp} />
+
       <div className="mt-5 flex w-full flex-col gap-6">
         <DataRenderer
           success={!("error" in questions)}

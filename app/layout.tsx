@@ -29,31 +29,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Layout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html suppressHydrationWarning lang="en">
-      <head>
-        <link
-          rel="stylesheet"
-          type="text/css"
-          href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css"
-        />
-      </head>
-      <body
-        className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}
-      >
-        <Suspense fallback={<Loading />}>
-          <LayoutContent>{children}</LayoutContent>
-        </Suspense>
-      </body>
-    </html>
-  );
-}
-
 async function LayoutContent({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
 
@@ -86,5 +61,31 @@ async function LayoutContent({ children }: { children: React.ReactNode }) {
         </AnchoredToastProvider>
       </ToastProvider>
     </ThemeProvider>
+  );
+}
+
+
+export default function Layout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html suppressHydrationWarning lang="en">
+      <head>
+        <link
+          rel="stylesheet"
+          type="text/css"
+          href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css"
+        />
+      </head>
+      <body
+        className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}
+      >
+        <Suspense fallback={<Loading />}>
+          <LayoutContent>{children}</LayoutContent>
+        </Suspense>
+      </body>
+    </html>
   );
 }

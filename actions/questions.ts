@@ -29,12 +29,7 @@ export async function searchQuestions({
     });
 
     cacheTag(
-        CACHE_KEYS.QUESTIONS_LIST,
-        CACHE_KEYS.QUESTIONS_LIST + String(page) +
-        String(pageSize) +
-        query +
-        filter
-    );
+        CACHE_KEYS.QUESTIONS_LIST);
 
     try {
         const { database } = await createAdminClient();
@@ -127,6 +122,16 @@ export async function createQuestion(userId: string, data: AskQuestionSchemaType
         await database.createOperations({
             transactionId: tx.$id,
             operations: [
+                {
+                    action: "increment",
+                    databaseId: appwriteConfig.databaseId,
+                    tableId: appwriteConfig.usersTableId,
+                    rowId: userId,
+                    data: {
+                        column: "questionsCount",
+                        value: 1,
+                    }
+                },
                 {
                     action: "create",
                     databaseId: appwriteConfig.databaseId,
@@ -371,6 +376,16 @@ export async function answerQuestion(answer: AnswerSchemaType, questionId: strin
             transactionId: tx.$id,
             operations: [
                 {
+                    action: "increment",
+                    databaseId: appwriteConfig.databaseId,
+                    tableId: appwriteConfig.usersTableId,
+                    rowId: user.$id,
+                    data: {
+                        column: "answersCount",
+                        value: 1,
+                    }
+                },
+                {
                     action: "create",
                     databaseId: appwriteConfig.databaseId,
                     tableId: appwriteConfig.answersTableId,
@@ -500,11 +515,7 @@ export async function getAnswers({
     });
 
     cacheTag(
-        CACHE_KEYS.QUESTION_ANSWERS + questionId,
-        CACHE_KEYS.QUESTION_ANSWERS + questionId + String(page) +
-        String(pageSize) +
-        filter,
-    );
+        CACHE_KEYS.QUESTION_ANSWERS + questionId);
 
     try {
         const { database } = await createAdminClient();
@@ -601,7 +612,7 @@ export async function isQuestionSavedByUser(userId: string, questionId: string) 
         revalidate: DEFAULT_CACHE_DURATION,
     });
 
-    cacheTag(CACHE_KEYS.QUESTION_DETAILS + questionId, CACHE_KEYS.USER_COLLECTIONS + userId);
+    cacheTag(CACHE_KEYS.USER_COLLECTIONS + userId);
 
     const { database } = await createAdminClient();
 
@@ -628,8 +639,7 @@ export async function searchUserCollections({ userId, page = 1, pageSize = 10, q
         revalidate: DEFAULT_CACHE_DURATION,
     });
 
-    // include pagination and search query in cache tag so different pages/queries are cached separately
-    cacheTag(CACHE_KEYS.USER_COLLECTIONS + userId, CACHE_KEYS.USER_COLLECTIONS + userId + String(filter) + String(query) + String(page) + String(pageSize));
+    cacheTag(CACHE_KEYS.USER_COLLECTIONS + userId);
 
     try {
         const { database } = await createAdminClient();
@@ -698,6 +708,50 @@ export async function searchUserCollections({ userId, page = 1, pageSize = 10, q
             databaseId: appwriteConfig.databaseId,
             tableId: appwriteConfig.questionsTableId,
             queries: questionQueries,
+        });
+
+        return res;
+    } catch (e) {
+        const error = handleError(e);
+        return {
+            total: 0,
+            rows: [],
+            error: error.message,
+        };
+    }
+}
+//#endregion
+
+//#region getHotQuestions
+export async function getHotQuestions() {
+    "use cache";
+
+    cacheLife({
+        revalidate: DEFAULT_CACHE_DURATION,
+    });
+
+    cacheTag(CACHE_KEYS.QUESTIONS_LIST);
+
+    try {
+        const { database } = await createAdminClient();
+
+        const queries = [
+            Query.limit(5),
+            Query.select([
+                "*",
+                "author.name",
+                "author.image",
+                "tags.*",
+                "tags.tag.title",
+            ]),
+            Query.orderDesc("upvotes"),
+            Query.orderDesc("views"),
+        ];
+
+        const res = await database.listRows<Question>({
+            databaseId: appwriteConfig.databaseId,
+            tableId: appwriteConfig.questionsTableId,
+            queries,
         });
 
         return res;

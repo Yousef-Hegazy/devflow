@@ -5,31 +5,27 @@ import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
 import handleError from "@/lib/errors";
-import { AppUser } from "@/lib/types/appwrite";
-import { UsersFilterType } from "@/lib/types/filters";
+import { Tag } from "@/lib/types/appwrite";
+import { TagsFilterType } from "@/lib/types/filters";
+import {
+    PaginationParams
+} from "@/lib/types/pagination";
 import { cacheLife, cacheTag } from "next/cache";
 import { Query } from "node-appwrite";
 
-export type SearchUsersParams = {
-    page: number;
-    pageSize: number;
-    query?: string;
-    filter?: UsersFilterType;
-};
-
-export async function searchUsers({
+export async function searchTags({
     page = 1,
     pageSize = 10,
     query = "",
-    filter = "newest"
-}: SearchUsersParams) {
+    filter = "popular",
+}: PaginationParams<TagsFilterType>) {
     "use cache";
 
     cacheLife({
         revalidate: DEFAULT_CACHE_DURATION,
     });
 
-    cacheTag(CACHE_KEYS.USERS_LIST);
+    cacheTag(CACHE_KEYS.TAGS_LIST,);
 
     try {
         const { database } = await createAdminClient();
@@ -37,71 +33,79 @@ export async function searchUsers({
         const queries = [
             Query.limit(pageSize),
             Query.offset((page - 1) * pageSize),
-            Query.select(["*"]),
+            Query.orderDesc("questionsCount"),
         ];
 
+        if (query) {
+            queries.push(Query.contains("title", query));
+        }
+
         switch (filter) {
+            case "name":
+                queries.push(Query.orderAsc("title"));
+                break;
             case "popular":
-                queries.push(Query.orderDesc("reputation"));
+                queries.push(Query.orderDesc("questionsCount"));
                 break;
             case "oldest":
                 queries.push(Query.orderAsc("$createdAt"));
                 break;
-            case "newest":
+            case "recent":
             default:
                 queries.push(Query.orderDesc("$createdAt"));
                 break;
         }
 
-        if (query) {
-            queries.push(
-                Query.or([
-                    Query.contains("name", query),
-                    Query.contains("username", query),
-                    Query.contains("email", query),
-                ])
-            );
-        }
-
-        const res = await database.listRows<AppUser>({
+        const res = await database.listRows<Tag>({
             databaseId: appwriteConfig.databaseId,
-            tableId: appwriteConfig.usersTableId,
+            tableId: appwriteConfig.tagsTableId,
             queries,
         });
 
         return res;
     } catch (e) {
         const error = handleError(e);
+
         return {
             total: 0,
             rows: [],
             error: error.message,
         };
     }
-}
+};
 
-export async function getUserDetails(userId: string) {
+
+export async function getPopularTags() {
     "use cache";
 
     cacheLife({
         revalidate: DEFAULT_CACHE_DURATION,
     });
 
-    cacheTag(CACHE_KEYS.USER_DETAILS + userId);
+    cacheTag(CACHE_KEYS.TAGS_LIST);
 
     try {
         const { database } = await createAdminClient();
 
-        const user = await database.getRow<AppUser>({
+        const queries = [
+            Query.limit(5),
+            Query.orderDesc("questionsCount"),
+        ];
+
+        const res = await database.listRows<Tag>({
             databaseId: appwriteConfig.databaseId,
-            tableId: appwriteConfig.usersTableId,
-            rowId: userId,
-            queries: [Query.select(["*"])],
+            tableId: appwriteConfig.tagsTableId,
+            queries,
         });
 
-        return user;
-    } catch (err) {
-        handleError(err);
-        throw null;
+        return res;
+    } catch (e) {
+        const error = handleError(e);
+
+        return {
+            total: 0,
+            rows: [],
+            error: error.message,
+        };
     }
 }

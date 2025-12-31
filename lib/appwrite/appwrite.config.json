@@ -194,6 +194,24 @@
                     "size": 255,
                     "default": null,
                     "encrypt": false
+                },
+                {
+                    "key": "questionsCount",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
+                },
+                {
+                    "key": "answersCount",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 9223372036854775807,
+                    "default": 0
                 }
             ],
             "indexes": [
@@ -214,7 +232,8 @@
             "$id": "question",
             "$permissions": [
                 "read(\"any\")",
-                "create(\"users\")"
+                "create(\"users\")",
+                "read(\"users\")"
             ],
             "databaseId": "6933f9060011aaa2a9d5",
             "name": "Question",

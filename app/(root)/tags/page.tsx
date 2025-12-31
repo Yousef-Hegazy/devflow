@@ -1,87 +1,14 @@
+import { searchTags } from "@/actions/tags";
 import DataRenderer from "@/components/DataRenderer";
 import TagCard from "@/components/cards/TagCard";
 import CommonFilter from "@/components/filters/CommonFilter";
 import AppPagination from "@/components/navigation/AppPagination";
 import LocalSearch from "@/components/search/LocalSearch";
-import { createAdminClient } from "@/lib/appwrite/config";
-import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
-import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { tagFilters } from "@/lib/constants/filters";
-import { appwriteConfig } from "@/lib/constants/server";
 import { EMPTY_TAGS } from "@/lib/constants/states";
-import handleError from "@/lib/errors";
 import { Tag } from "@/lib/types/appwrite";
 import { TagsFilterType } from "@/lib/types/filters";
-import {
-  PaginationParams,
-  PaginationSearchParams,
-} from "@/lib/types/pagination";
-import { cacheLife, cacheTag } from "next/cache";
-import { Query } from "node-appwrite";
-
-const searchTags = async ({
-  page = 1,
-  pageSize = 10,
-  query = "",
-  filter = "popular",
-}: PaginationParams<TagsFilterType>) => {
-  "use cache";
-
-  cacheLife({
-    revalidate: DEFAULT_CACHE_DURATION,
-  });
-
-  cacheTag(
-    CACHE_KEYS.TAGS_LIST,
-    CACHE_KEYS.TAGS_LIST + String(page) + String(pageSize) + query + filter,
-  );
-
-  try {
-    const { database } = await createAdminClient();
-
-    const queries = [
-      Query.limit(pageSize),
-      Query.offset((page - 1) * pageSize),
-      Query.orderDesc("questionsCount"),
-    ];
-
-    if (query) {
-      queries.push(Query.contains("title", query));
-    }
-
-    switch (filter) {
-      case "name":
-        queries.push(Query.orderAsc("title"));
-        break;
-      case "popular":
-        queries.push(Query.orderDesc("questionsCount"));
-        break;
-      case "oldest":
-        queries.push(Query.orderAsc("$createdAt"));
-        break;
-      case "recent":
-      default:
-        queries.push(Query.orderDesc("$createdAt"));
-        break;
-    }
-
-    const res = await database.listRows<Tag>({
-      databaseId: appwriteConfig.databaseId,
-      tableId: appwriteConfig.tagsTableId,
-      queries,
-    });
-
-    return res;
-  } catch (e) {
-    const error = handleError(e);
-
-    return {
-      total: 0,
-      rows: [],
-      error: error.message,
-    };
-  }
-};
+import { PaginationSearchParams } from "@/lib/types/pagination";
 
 interface Props {
   searchParams: Promise<PaginationSearchParams<TagsFilterType>>;

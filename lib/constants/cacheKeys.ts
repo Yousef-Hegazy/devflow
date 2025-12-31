@@ -8,5 +8,6 @@ export const enum CACHE_KEYS {
     TAGS_LIST = "tagsList",
     USER_QUESTION_VOTE = "userQuestionVote",
     USERS_LIST = "usersList",
+    USER_DETAILS = "userDetails",
     USER_COLLECTIONS = "userCollections",
 }

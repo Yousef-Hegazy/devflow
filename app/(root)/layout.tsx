@@ -11,7 +11,7 @@ type Props = {
 
 const RootLayout = async ({ children }: Props) => {
   const user = await getCurrentUser();
-  
+
   return (
     <main className="background-light850_dark100 relative">
       <Navbar user={user} />

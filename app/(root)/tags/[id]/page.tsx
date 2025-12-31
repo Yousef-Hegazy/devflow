@@ -54,10 +54,7 @@ const getTagQuestions = async ({
 
   cacheTag(
     CACHE_KEYS.QUESTIONS_LIST,
-    String(page),
-    String(pageSize),
-    query,
-    tagId,
+    CACHE_KEYS.QUESTIONS_LIST + String(page) + String(pageSize) + query + tagId,
   );
 
   try {
