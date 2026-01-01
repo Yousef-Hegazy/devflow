@@ -478,7 +478,7 @@ export async function getQuestionViews(id: string) {
     cacheLife({
         revalidate: DEFAULT_CACHE_DURATION,
     });
-    cacheTag(CACHE_KEYS.QUESTION_VIEWS + id);
+    cacheTag(CACHE_KEYS.QUESTION_VIEWS + id, CACHE_KEYS.QUESTION_DETAILS + id);
 
     try {
         const { database } = await createAdminClient();

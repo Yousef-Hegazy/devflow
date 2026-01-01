@@ -101,7 +101,7 @@ export async function getUserDetails(userId: string) {
 
         return user;
     } catch (err) {
-        handleError(err);
-        throw null;
+        const error = handleError(err);
+        return error;
     }
 }
