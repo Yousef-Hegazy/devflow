@@ -39,7 +39,7 @@ export default async function Home({ searchParams }: Props) {
           Ask a Question
         </Button>
       </section>
-      
+
       <section className="mt-11 flex justify-between gap-5 max-sm:flex-col sm:items-center">
         <LocalSearch
           placeholder="Search Questions..."

@@ -3,7 +3,7 @@ import DataRenderer from "@/components/DataRenderer";
 import LocalSearch from "@/components/search/LocalSearch";
 import { EMPTY_COLLECTIONS } from "@/lib/constants/states";
 
-import { searchUserCollections } from "@/actions/questions";
+import { searchUserCollections } from "@/actions/collections";
 import CommonFilter from "@/components/filters/CommonFilter";
 import AppPagination from "@/components/navigation/AppPagination";
 import { collectionFilters } from "@/lib/constants/filters";
@@ -40,7 +40,7 @@ const CollectionsPage = async ({ searchParams }: Props) => {
       <section className="flex w-full flex-col-reverse justify-between gap-4 sm:flex-row sm:items-center">
         <h1 className="h1-bold text-dark100_light900">Saved Questions</h1>
       </section>
-      
+
       <section className="mt-11 flex flex-row justify-between gap-5 max-sm:flex-col sm:items-center">
         <LocalSearch
           placeholder="Search Questions..."

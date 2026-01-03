@@ -35,7 +35,7 @@ const MetricContent = ({
       />
 
       <p className={cn("flex items-center gap-1", classNames?.text)}>
-        {isAuthor ? value.toString().split(" ")[0] : value}
+        {isAuthor ? String(value).split(" ")[0] : value}
       </p>
 
       {title ? (

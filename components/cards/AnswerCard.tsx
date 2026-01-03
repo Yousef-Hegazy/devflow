@@ -1,6 +1,7 @@
 import UserAnswerVotes from "@/app/(root)/questions/[id]/UserAnswerVotes";
-import { Answer } from "@/lib/types/appwrite";
 import { getTimeAgo } from "@/lib/helpers/date";
+import { Answer } from "@/lib/types/appwrite";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Suspense } from "react";
 import PreviewMarkdown from "../MarkdownEditor/PreviewMarkdown";
@@ -11,14 +12,15 @@ import Votes from "../votes/Votes";
 type Props = {
   answer: Answer;
   userId?: string;
+  isCompact?: boolean;
+  isLink?: boolean;
 };
 
-const AnswerCard = ({ answer, userId }: Props) => {
+const AnswerContent = ({ answer, userId, isCompact }: Props) => {
   const timeAgo = getTimeAgo(new Date(answer.$createdAt));
-
   return (
-    <article className="light-border border-b py-10">
-      <span id={answer.$id} className="hash-span" />
+    <>
+      <span id={`answer-${answer.$id}`} className="hash-span" />
 
       <div className="mb-5 flex flex-col-reverse justify-between gap-5 sm:flex-row sm:items-center sm:gap-2">
         <div className="flex flex-1 items-start gap-1 sm:items-center">
@@ -45,6 +47,15 @@ const AnswerCard = ({ answer, userId }: Props) => {
           </Link>
         </div>
 
+        {isCompact ? (
+          <Link
+            className="paragraph-semibold text-sm text-dark500_light700"
+            href={`/questions/${String(answer.question)}#answer-${answer.$id}`}
+          >
+            Read More...
+          </Link>
+        ) : null}
+
         <Suspense fallback={<Skeleton className="h-6 w-27.5" />}>
           {userId ? (
             <UserAnswerVotes
@@ -66,6 +77,25 @@ const AnswerCard = ({ answer, userId }: Props) => {
       </div>
 
       <PreviewMarkdown content={answer.content} />
+    </>
+  );
+};
+
+const AnswerCard = ({ answer, userId, isLink, isCompact }: Props) => {
+  const containerClasses = cn("card-wrapper rounded-md light-border border-b p-10", {
+    "p-5 max-h-[150px] overflow-hidden": isCompact,
+  });
+
+  return isLink ? (
+    <Link
+      href={`/questions/${String(answer.question)}#answer-${answer.$id}`}
+      className={containerClasses}
+    >
+      <AnswerContent answer={answer} userId={userId} isCompact={isCompact} />
+    </Link>
+  ) : (
+    <article className={containerClasses}>
+      <AnswerContent answer={answer} userId={userId} isCompact={isCompact} />
     </article>
   );
 };
