@@ -9,7 +9,7 @@ import { Question, Tag } from "@/lib/types/appwrite";
 import { HomeFilterType } from "@/lib/types/filters";
 import { PaginationParams } from "@/lib/types/pagination";
 import { AskQuestionSchema, AskQuestionSchemaType } from "@/lib/validators/questionSchemas";
-import { cacheLife, cacheTag, updateTag } from "next/cache";
+import { cacheLife, cacheTag, revalidateTag, updateTag } from "next/cache";
 import { ID, Permission, Query, Role } from "node-appwrite";
 
 //#region searchQuestions
@@ -193,6 +193,7 @@ export async function createQuestion(userId: string, data: AskQuestionSchemaType
         });
 
         updateTag(CACHE_KEYS.QUESTIONS_LIST);
+        revalidateTag(CACHE_KEYS.TAGS_LIST, "max");
 
         return questionId;
 
@@ -326,6 +327,7 @@ export async function updateQuestion(userId: string, questionId: string, data: A
 
         updateTag(CACHE_KEYS.QUESTIONS_LIST);
         updateTag(CACHE_KEYS.QUESTION_DETAILS + questionId);
+        revalidateTag(CACHE_KEYS.TAGS_LIST, "max");
 
         return questionId;
 

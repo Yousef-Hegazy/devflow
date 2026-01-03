@@ -1,3 +1,5 @@
+"use cache";
+
 import { searchAnswers } from "@/actions/answers";
 import AnswerCard from "@/components/cards/AnswerCard";
 import DataRenderer from "@/components/DataRenderer";

@@ -15,6 +15,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import UserAnswersTab from "./UserAnswersTab";
 import UserQuestionsTab from "./UserQuestionsTab";
+import UserTopTags from "./UserTopTags";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -27,7 +28,6 @@ type Props = {
 
 export default async function Profile({ params, searchParams }: Props) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
-  const questionsFilters = homeFilters.filter((f) => f.value !== "recommended");
 
   const { tab } = sp;
 
@@ -43,6 +43,8 @@ export default async function Profile({ params, searchParams }: Props) {
       </div>
     );
   }
+
+  const questionsFilters = homeFilters.filter((f) => f.value !== "recommended");
 
   const isCurrentUser = !!(currentUser && user && currentUser.$id === user.$id);
 
@@ -169,7 +171,9 @@ export default async function Profile({ params, searchParams }: Props) {
         <div className="flex min-w-62.5 shrink-0 flex-col max-lg:hidden">
           <h3 className="h3-bold text-dark200_light900">Top Tags</h3>
           <div className="mt-7 flex flex-col gap-4">
-            <p>List of Tags</p>
+            <Suspense fallback={<Loading />}>
+              <UserTopTags userId={user.$id} />
+            </Suspense>
           </div>
         </div>
       </section>

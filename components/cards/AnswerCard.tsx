@@ -33,7 +33,7 @@ const AnswerContent = ({ answer, userId, isCompact }: Props) => {
 
           <Link
             href={{
-              pathname: `profile/${answer.author.$id}`,
+              pathname: `/profile/${answer.author.$id}`,
             }}
             className="flex flex-col sm:flex-row sm:items-center sm:gap-2"
           >

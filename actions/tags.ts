@@ -5,7 +5,7 @@ import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { appwriteConfig } from "@/lib/constants/server";
 import handleError from "@/lib/errors";
-import { Tag } from "@/lib/types/appwrite";
+import { Question, Tag } from "@/lib/types/appwrite";
 import { TagsFilterType } from "@/lib/types/filters";
 import {
     PaginationParams
@@ -106,6 +106,50 @@ export async function getPopularTags() {
             total: 0,
             rows: [],
             error: error.message,
+        };
+    }
+}
+
+export async function getUserTags(userId: string) {
+    "use cache";
+
+    cacheLife({
+        revalidate: DEFAULT_CACHE_DURATION * 10,
+    });
+
+    cacheTag(CACHE_KEYS.TAGS_LIST);
+
+    try {
+        const { database } = await createAdminClient();
+
+        const userQuestions = await database.listRows<Question>({
+            databaseId: appwriteConfig.databaseId,
+            tableId: appwriteConfig.questionsTableId,
+            queries: [
+                Query.equal("author", userId),
+                Query.select(["tags.*", "tags.tag.$id"])
+            ],
+        });
+
+        const userTags = await database.listRows<Tag>({
+            databaseId: appwriteConfig.databaseId,
+            tableId: appwriteConfig.tagsTableId,
+            queries: [
+                Query.equal("$id", userQuestions.rows.flatMap(q => q.tags.map(t => t.tag.$id))),
+                Query.limit(10),
+                Query.select(["$id", "title", "questionsCount"]),
+                Query.orderDesc("questionsCount"),
+            ],
+        });
+
+        return userTags;
+    } catch (error) {
+        const err = handleError(error);
+
+        return {
+            total: 0,
+            rows: [],
+            error: err.message,
         };
     }
 }
