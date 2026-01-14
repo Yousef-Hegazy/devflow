@@ -47,7 +47,7 @@ const AnswersList = async ({ questionId, userId, searchParams }: Props) => {
         }
         render={([res]) =>
           res.rows.map((answer) => (
-            <AnswerCard key={answer.$id} answer={answer} userId={userId} />
+            <AnswerCard key={answer.id} answer={answer} userId={userId} />
           ))
         }
       />

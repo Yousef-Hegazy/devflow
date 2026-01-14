@@ -34,7 +34,7 @@ const UserAnswersTab = async ({ userId, searchParams }: Props) => {
         }
         render={([res]) =>
           res.rows.map((answer) => (
-            <AnswerCard key={answer.$id} answer={answer} userId={userId} isCompact isLink />
+            <AnswerCard key={answer.id} answer={answer} userId={userId} isCompact isLink />
           ))
         }
       />

@@ -1,94 +1,70 @@
 "use server";
 
-import { createAdminClient } from "@/lib/appwrite/config";
 import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
-import { appwriteConfig } from "@/lib/constants/server";
 import handleError from "@/lib/errors";
 import { getCurrentUser } from "@/lib/server";
-import { Answer } from "@/lib/types/appwrite";
 import { AnswersFilterType } from "@/lib/types/filters";
-import { AnswerSchemaType } from "@/lib/validators/questionSchemas";
+import { AnswerSchema, AnswerSchemaType } from "@/lib/validators/questionSchemas";
 import { logger } from "@/pino";
 import { cacheLife, cacheTag, updateTag } from "next/cache";
-import { ID, Permission, Query, Role } from "node-appwrite";
+
+// Drizzle
+import { db } from "@/db/client";
+import { user as userTable } from "@/db/auth-schema";
+import { and, asc, desc, eq, sql, SQL } from "drizzle-orm";
+import { answer, vote } from "@/db/db-schema";
 
 
 //#region answerQuestion
-export async function answerQuestion(answer: AnswerSchemaType, questionId: string) {
-    const { database } = await createAdminClient();
+export async function answerQuestion(answerBody: AnswerSchemaType, questionId: string) {
+    // Validate input server-side
+    const parsed = AnswerSchema.parse(answerBody);
 
-    const tx = await database.createTransaction();
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+        throw new Error("User must be logged in to answer a question.");
+    }
 
     try {
-        const user = await getCurrentUser();
+        let createdAnswerId: string | undefined;
 
-        if (!user) {
-            throw new Error("User must be logged in to answer a question.");
-        }
+        await db.transaction(async (tx) => {
+            const inserted = await tx
+                .insert(answer)
+                .values({
+                    authorId: currentUser.id,
+                    questionId,
+                    content: parsed.content,
+                })
+                .returning();
 
-        const answerId = ID.unique();
+            if (!inserted || !inserted[0]) {
+                throw new Error("Failed to create answer");
+            }
 
-        await database.createOperations({
-            transactionId: tx.$id,
-            operations: [
-                {
-                    action: "increment",
-                    databaseId: appwriteConfig.databaseId,
-                    tableId: appwriteConfig.usersTableId,
-                    rowId: user.$id,
-                    data: {
-                        column: "answersCount",
-                        value: 1,
-                    }
-                },
-                {
-                    action: "create",
-                    databaseId: appwriteConfig.databaseId,
-                    tableId: appwriteConfig.answersTableId,
-                    rowId: answerId,
-                    data: {
-                        content: answer.content,
-                        author: user.$id,
-                        question: questionId,
-                        $permissions: [
-                            Permission.read(Role.any()),
-                            Permission.write(Role.user(user.$id)),
-                            Permission.update(Role.user(user.$id)),
-                            Permission.delete(Role.user(user.$id)),
-                        ]
-                    }
-                },
-                {
-                    action: "increment",
-                    databaseId: appwriteConfig.databaseId,
-                    tableId: appwriteConfig.questionsTableId,
-                    rowId: questionId,
-                    data: {
-                        column: "answersCount",
-                        value: 1,
-                    }
-                }
-            ]
+            createdAnswerId = inserted[0].id;
+
+            // Increment user's answersCount
+            await tx
+                .update(userTable)
+                .set({ answersCount: sql`${userTable.answersCount} + 1` })
+                .where(eq(userTable.id, currentUser.id));
+
+            // Note: questions table doesn't maintain answersCount column in Postgres schema;
+            // we rely on COUNT(answers) in queries, so we do not update question row here.
         });
 
-        await database.updateTransaction({
-            transactionId: tx.$id,
-            commit: true,
-        });
-
+        // Invalidate caches
         updateTag(CACHE_KEYS.QUESTION_DETAILS + questionId);
-        // Invalidate paginated answers cache for this question
         updateTag(CACHE_KEYS.QUESTION_ANSWERS + questionId);
 
-        return answerId;
+        if (!createdAnswerId) throw new Error("Failed to create answer");
 
+        return createdAnswerId;
     } catch (error) {
-        await database.updateTransaction({
-            transactionId: tx.$id,
-            rollback: true,
-        });
-        throw error;
+        throw handleError(error);
     }
 }
 //#endregion
@@ -107,7 +83,7 @@ export async function searchAnswers({
     pageSize?: number;
     filter?: AnswersFilterType;
     questionId?: string;
-    userId?: string
+    userId?: string;
 }) {
     "use cache";
 
@@ -115,48 +91,72 @@ export async function searchAnswers({
         revalidate: DEFAULT_CACHE_DURATION,
     });
 
-    cacheTag(
-        CACHE_KEYS.QUESTION_ANSWERS + questionId);
+    cacheTag(CACHE_KEYS.QUESTION_ANSWERS + questionId);
 
     try {
-        const { database } = await createAdminClient();
+        // Build where clauses
+        const whereClauses: SQL[] = [];
+        if (questionId) whereClauses.push(eq(answer.questionId, questionId));
+        if (userId) whereClauses.push(eq(answer.authorId, userId));
 
-        const queries = [
-            Query.limit(pageSize),
-            Query.offset((page - 1) * pageSize),
-            Query.select(["*", "author.name", "author.image"]),
+        // Aggregates for ordering and counts
+        const upvotesExpr = sql`SUM(CASE WHEN ${vote.type} = 'upvote' THEN 1 ELSE 0 END)`;
+        const downvotesExpr = sql`SUM(CASE WHEN ${vote.type} = 'downvote' THEN 1 ELSE 0 END)`;
 
-        ];
+        // Count total matching rows
+        const totalRes = await db
+            .select({ count: sql`count(*)` })
+            .from(answer)
+            .where(whereClauses.length ? and(...whereClauses) : undefined);
 
-        if (questionId) {
-            queries.push(Query.equal("question", questionId),)
-        }
+        const total = Number(totalRes?.[0]?.count ?? 0);
 
-        if (userId) {
-            queries.push(Query.equal("author", userId),)
-        }
-
+        // Determine ordering
+        let orderByCols: SQL[] = [];
         switch (filter) {
             case "latest":
-                queries.push(Query.orderDesc("$createdAt"));
+                orderByCols = [desc(answer.createdAt)];
                 break;
             case "oldest":
-                queries.push(Query.orderAsc("$createdAt"));
+                orderByCols = [asc(answer.createdAt)];
                 break;
             case "popular":
-                queries.push(Query.orderDesc("upvotes"));
+                orderByCols = [desc(upvotesExpr)];
                 break;
             default:
-                queries.push(Query.orderDesc("$createdAt"));
+                orderByCols = [desc(answer.createdAt)];
         }
 
-        const res = await database.listRows<Answer>({
-            databaseId: appwriteConfig.databaseId,
-            tableId: appwriteConfig.answersTableId,
-            queries,
-        });
+        const rows = await db
+            .select({
+                id: answer.id,
+                content: answer.content,
+                createdAt: answer.createdAt,
+                questionId: answer.questionId,
+                author: { id: userTable.id, name: userTable.name, image: userTable.image },
+                upvotes: upvotesExpr,
+                downvotes: downvotesExpr,
+            })
+            .from(answer)
+            .leftJoin(userTable, eq(answer.authorId, userTable.id))
+            .leftJoin(vote, eq(answer.id, vote.answerId))
+            .where(whereClauses.length ? and(...whereClauses) : undefined)
+            .groupBy(answer.id, answer.content, answer.createdAt, answer.questionId, userTable.id, userTable.name, userTable.image)
+            .orderBy(...orderByCols)
+            .limit(pageSize)
+            .offset((page - 1) * pageSize);
 
-        return res;
+        const formatted = rows.map((r) => ({
+            id: r.id,
+            content: r.content,
+            createdAt: r.createdAt,
+            questionId: r.questionId,
+            author: r.author,
+            upvotes: Number(r.upvotes ?? 0),
+            downvotes: Number(r.downvotes ?? 0),
+        }));
+
+        return { total, rows: formatted };
     } catch (e) {
         const error = handleError(e);
         logger.error(JSON.stringify(error));

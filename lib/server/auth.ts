@@ -1,12 +1,12 @@
+import { auth } from "@/auth";
+import { User } from "@/db/schema-types";
 import { logger } from "@/pino";
 import { cacheLife, cacheTag } from "next/cache";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import "server-only";
-import { createSessionClient } from "../appwrite/config";
 import { DEFAULT_CACHE_DURATION } from "../constants";
 import { CACHE_KEYS } from "../constants/cacheKeys";
 import { appwriteConfig } from "../constants/server";
-import { AppUser } from "../types/appwrite";
 
 export async function getSession() {
     const cookieStore = await cookies();
@@ -21,23 +21,16 @@ export async function getCurrentUser() {
     cacheLife({ revalidate: DEFAULT_CACHE_DURATION });
 
     try {
-        const { account, database } = await createSessionClient();
-
-        const ac = await account.get();
-
-        const user = await database.getRow<AppUser>({
-            databaseId: appwriteConfig.databaseId,
-            tableId: appwriteConfig.usersTableId,
-            rowId: ac.$id,
+        const session = await auth.api.getSession({
+            headers: await headers()
         });
 
-        if (!user.$id) {
+        if (!session) {
             cacheLife({ revalidate: 0 });
             return null;
         }
 
-        return user;
-
+        return session.user as unknown as User;
     } catch (e) {
         logger.error({ error: e, message: "Error fetching current user" });
         cacheLife({ revalidate: 0 });
