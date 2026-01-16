@@ -1,13 +1,12 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import Votes from "@/components/votes/Votes";
-import { createAdminClient } from "@/lib/appwrite/config";
-import { Vote } from "@/lib/types/appwrite";
+import { db } from "@/db/client";
+import { vote } from "@/db/db-schema";
 import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
-import { appwriteConfig } from "@/lib/constants/server";
 import { logger } from "@/pino";
+import { and, eq } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
-import { Query } from "node-appwrite";
 import { Suspense } from "react";
 
 type Props = {
@@ -35,19 +34,14 @@ export async function getUserQuestionVote({
   );
 
   try {
-    const { database } = await createAdminClient();
-    const votes = await database.listRows<Vote>({
-      databaseId: appwriteConfig.databaseId,
-      tableId: appwriteConfig.votesTableId,
-      queries: [
-        Query.equal("question", questionId),
-        Query.equal("author", userId),
-        Query.limit(1),
-      ],
+    const userVote = await db.query.vote.findFirst({
+      where: and(
+        eq(vote.questionId, questionId),
+        eq(vote.authorId, userId)
+      ),
     });
 
-    const vote = votes.rows[0];
-    return vote;
+    return userVote || null;
   } catch (error) {
     logger.error(error, "Error fetching votes:");
     return null;

@@ -1,19 +1,24 @@
-import { signIn, signUp } from "@/actions/auth";
+import authClient from "@/auth-client";
 import { toastManager } from "@/components/ui/toast";
+import { logger } from "@/pino";
 import useAuthStore from "@/stores/authStore";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { SignInSchemaType, SignUpSchemaType } from "../validators/authSchemas";
-import { logger } from "@/pino";
 
 export function useSignUp() {
     const router = useRouter();
     const setUser = useAuthStore((state) => state.setUser);
 
     return useMutation({
-        mutationFn: (data: SignUpSchemaType) => signUp(data),
-        onSuccess: (user) => {
-            setUser(user);
+        mutationFn: (data: SignUpSchemaType) => authClient.signUp.email({
+            name: data.name,
+            email: data.email,
+            password: data.password,
+            displayUsername: data.username,
+        }),
+        onSuccess: (res) => {
+            setUser(res.data?.user);
             router.push("/");
         },
         onError: (error) => {
@@ -32,10 +37,12 @@ export function useSignIn() {
     const setUser = useAuthStore((state) => state.setUser);
 
     return useMutation({
-        mutationFn: (data: SignInSchemaType) => signIn(data),
-        onSuccess: (user) => {
-            console.log({ user })
-            setUser(user);
+        mutationFn: (data: SignInSchemaType) => authClient.signIn.email({
+            email: data.email,
+            password: data.password,
+        }),
+        onSuccess: (res) => {
+            setUser(res.data?.user);
             router.push("/");
         },
         onError: (error) => {

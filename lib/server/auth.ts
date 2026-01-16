@@ -2,17 +2,16 @@ import { auth } from "@/auth";
 import { User } from "@/db/schema-types";
 import { logger } from "@/pino";
 import { cacheLife, cacheTag } from "next/cache";
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 import "server-only";
 import { DEFAULT_CACHE_DURATION } from "../constants";
 import { CACHE_KEYS } from "../constants/cacheKeys";
-import { appwriteConfig } from "../constants/server";
 
-export async function getSession() {
-    const cookieStore = await cookies();
-    const session = cookieStore.get(appwriteConfig.sessionName);
-    return session?.value || null;
-}
+// export async function getSession() {
+//     const cookieStore = await cookies();
+//     const session = cookieStore.get(appwriteConfig.sessionName);
+//     return session?.value || null;
+// }
 
 export async function getCurrentUser() {
     "use cache: private";
@@ -40,7 +39,7 @@ export async function getCurrentUser() {
 };
 
 
-export async function isAuthenticated() {
-    const session = await getSession();
-    return !!session;
-}
+// export async function isAuthenticated() {
+//     const session = await getSession();
+//     return !!session;
+// }

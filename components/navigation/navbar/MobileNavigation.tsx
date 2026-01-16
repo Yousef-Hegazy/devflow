@@ -1,5 +1,6 @@
 "use client";
 
+import authClient from "@/auth-client";
 import BurgerMenuBtn from "@/components/ui/burger-menu";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,16 +12,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { logout } from "@/actions/auth";
-import useAuthStore from "@/stores/authStore";
+import { User } from "@/db/schema-types";
 import { LogOut } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import NavLinks from "./NavLinks";
 
-const MobileNavigation = () => {
-  const user = useAuthStore((state) => state.user);
+const MobileNavigation = ({ user }: { user: User | null }) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -58,19 +57,16 @@ const MobileNavigation = () => {
             </SheetClose>
 
             <div className="flex flex-col gap-3">
-              {user?.$id ? (
+              {user?.id ? (
                 <SheetClose>
-                  <form action={logout}>
-                    <Button
-                      type="submit"
-                      className="base-medium text-foreground w-fit rounded border-0 bg-transparent px-4 py-3 shadow-transparent inset-shadow-transparent hover:bg-transparent"
-                    >
-                      <LogOut className="text-foreground size-5" />
-                      <span className="text-dark300_light900">
-                        Sign Out
-                      </span>
-                    </Button>
-                  </form>
+                  <Button
+                    type="submit"
+                    className="base-medium text-foreground w-fit rounded border-0 bg-transparent px-4 py-3 shadow-transparent inset-shadow-transparent hover:bg-transparent"
+                    onClick={() => authClient.signOut()}
+                  >
+                    <LogOut className="text-foreground size-5" />
+                    <span className="text-dark300_light900">Sign Out</span>
+                  </Button>
                 </SheetClose>
               ) : (
                 <>
@@ -78,7 +74,7 @@ const MobileNavigation = () => {
                     <Link href="/sign-in">
                       <Button
                         render={<span />}
-                        className="small-medium! bg-secondary! min-h-[41px]! w-full! rounded-lg border-0! px-4 py-3 shadow-none! ring-0!"
+                        className="small-medium! bg-secondary! min-h-10.25! w-full! rounded-lg border-0! px-4 py-3 shadow-none! ring-0!"
                       >
                         <span className="primary-text-gradient">Sign In</span>
                       </Button>
@@ -89,7 +85,7 @@ const MobileNavigation = () => {
                     <Link href="/sign-up">
                       <Button
                         render={<span />}
-                        className="small-medium! light-border-2! btn-tertiary! text-dark400_light900! min-h-[41px]! w-full! rounded-lg border px-4 py-3 shadow-none"
+                        className="small-medium! light-border-2! btn-tertiary! text-dark400_light900! min-h-10.25! w-full! rounded-lg border px-4 py-3 shadow-none"
                       >
                         Sign Up
                       </Button>

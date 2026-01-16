@@ -1,11 +1,11 @@
 import UserAvatar from "@/components/UserAvatar";
-import { AppUser } from "@/lib/types/appwrite";
 import Image from "next/image";
 import Link from "next/link";
 import MobileNavigation from "./MobileNavigation";
 import ThemePicker from "./ThemePicker";
+import { User } from "@/db/schema-types";
 
-const Navbar = ({ user }: { user: AppUser | null }) => {
+const Navbar = ({ user }: { user: User | null }) => {
   return (
     <nav className="flex-between background-light900_dark200 shadow-light-300 fixed z-50 w-full gap-5 p-6 sm:px-12 dark:shadow-none">
       <Link
@@ -30,9 +30,9 @@ const Navbar = ({ user }: { user: AppUser | null }) => {
       <div className="flex-between gap-5">
         <ThemePicker />
 
-        {user?.$id ? <UserAvatar user={user} /> : null}
+        {user?.id ? <UserAvatar user={user} /> : null}
 
-        <MobileNavigation />
+        <MobileNavigation user={user} />
       </div>
     </nav>
   );

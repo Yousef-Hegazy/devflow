@@ -1,4 +1,4 @@
-import { searchTags } from "@/actions/tags";
+import { searchTags, TagWithQuestionCount } from "@/actions/tags";
 import DataRenderer from "@/components/DataRenderer";
 import TagCard from "@/components/cards/TagCard";
 import CommonFilter from "@/components/filters/CommonFilter";
@@ -6,7 +6,6 @@ import AppPagination from "@/components/navigation/AppPagination";
 import LocalSearch from "@/components/search/LocalSearch";
 import { tagFilters } from "@/lib/constants/filters";
 import { EMPTY_TAGS } from "@/lib/constants/states";
-import { Tag } from "@/lib/types/appwrite";
 import { TagsFilterType } from "@/lib/types/filters";
 import { PaginationSearchParams } from "@/lib/types/pagination";
 
@@ -59,15 +58,15 @@ export default async function TagsPage({ searchParams }: Props) {
 
       <DataRenderer
         success={!("error" in tags)}
-        error={"error" in tags ? { message: tags.error } : undefined}
-        data={"error" in tags ? [] : tags.rows}
+        error={tags.error ? { message: tags.error } : undefined}
+        data={tags.rows}
         empty={EMPTY_TAGS}
-        render={(data: Tag[]) => (
+        render={(data: TagWithQuestionCount[]) => (
           <div className="mt-5 flex flex-wrap gap-3">
             {data.map((tag) => (
               <TagCard
-                key={tag.$id}
-                $id={tag.$id}
+                key={tag.id}
+                $id={tag.id}
                 name={tag.title.toLocaleLowerCase()}
                 questionsNo={tag.questionsCount}
                 showCount={false}

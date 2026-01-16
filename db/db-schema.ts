@@ -19,7 +19,7 @@ import { user } from './auth-schema';
 // Question table
 export const question = pgTable('question', {
     id: uuid('id').primaryKey().defaultRandom(),
-    authorId: text('author_id').notNull().references(() => user.id),
+    authorId: text('author_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     content: text('content').notNull(),
     views: integer('views').default(0).notNull(),
@@ -45,8 +45,8 @@ export const tag = pgTable('tag', {
 // QuestionTag join table
 export const questionTag = pgTable('question_tag', {
     id: uuid('id').primaryKey().defaultRandom(),
-    questionId: uuid('question_id').notNull().references(() => question.id),
-    tagId: uuid('tag_id').notNull().references(() => tag.id),
+    questionId: uuid('question_id').notNull().references(() => question.id, { onDelete: 'cascade' }),
+    tagId: uuid('tag_id').notNull().references(() => tag.id, { onDelete: 'cascade' }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
     uniqueIndex('question_tag_unique').on(table.questionId, table.tagId)
@@ -55,8 +55,8 @@ export const questionTag = pgTable('question_tag', {
 // Answer table
 export const answer = pgTable('answer', {
     id: uuid('id').primaryKey().defaultRandom(),
-    authorId: text('author_id').notNull().references(() => user.id),
-    questionId: uuid('question_id').notNull().references(() => question.id),
+    authorId: text('author_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    questionId: uuid('question_id').notNull().references(() => question.id, { onDelete: 'cascade' }),
     content: text('content').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -70,9 +70,9 @@ export const answer = pgTable('answer', {
 // Vote table
 export const vote = pgTable('vote', {
     id: uuid('id').primaryKey().defaultRandom(),
-    authorId: text('author_id').notNull().references(() => user.id),
-    questionId: uuid('question_id').references(() => question.id),
-    answerId: uuid('answer_id').references(() => answer.id),
+    authorId: text('author_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    questionId: uuid('question_id').references(() => question.id, { onDelete: 'cascade' }),
+    answerId: uuid('answer_id').references(() => answer.id, { onDelete: 'cascade' }),
     type: voteType('type').notNull().default('upvote'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
@@ -83,8 +83,8 @@ export const vote = pgTable('vote', {
 // Collection table
 export const collection = pgTable('collection', {
     id: uuid('id').primaryKey().defaultRandom(),
-    authorId: text('author_id').notNull().references(() => user.id),
-    questionId: uuid('question_id').notNull().references(() => question.id),
+    authorId: text('author_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    questionId: uuid('question_id').notNull().references(() => question.id, { onDelete: 'cascade' }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
     uniqueIndex('collection_unique').on(table.authorId, table.questionId)
@@ -93,7 +93,7 @@ export const collection = pgTable('collection', {
 // Interaction table
 export const interaction = pgTable('interaction', {
     id: uuid('id').primaryKey().defaultRandom(),
-    userId: text('user_id').notNull().references(() => user.id),
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
     action: text('action').notNull(),
     actionId: uuid('action_id').notNull(),
     actionType: interactionType('action_type').notNull().default('question'),

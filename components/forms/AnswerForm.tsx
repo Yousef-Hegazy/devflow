@@ -64,7 +64,7 @@ const AnswerForm = ({
     );
 
   const onGenerateAIAnswer = async () => {
-    if (!user?.$id) {
+    if (!user?.id) {
       toastManager.add({
         title: "Authentication Required",
         description: "You must be logged in to generate an AI answer.",
@@ -116,14 +116,14 @@ const AnswerForm = ({
     // eslint-disable-next-line react-hooks/refs
     <Form onSubmit={handleSubmit(onSubmit)} className="gap-6">
       <div className="flex items-center justify-end">
-        <Tooltip disabled={!!user?.$id}>
+        <Tooltip disabled={!!user?.id}>
           <TooltipTrigger
             render={
               <LoadingButton
                 className="btn light-border-2 text-primary-500 dark:text-primary-500 gap-1.5 rounded-md border px-4 py-2.5 shadow-none"
                 type="button"
                 isLoading={isGeneratingAIAnswer}
-                disabled={isGeneratingAIAnswer || !user?.$id}
+                disabled={isGeneratingAIAnswer || !user?.id}
                 onClick={onGenerateAIAnswer}
               >
                 <Image

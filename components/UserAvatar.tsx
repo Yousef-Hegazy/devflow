@@ -1,10 +1,10 @@
-import { AppUser } from "@/lib/types/appwrite";
+import { User } from "@/db/schema-types";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 type Props = {
-  user: AppUser;
+  user: User | null;
   classNames?: {
     avatar?: string;
     image?: string;
@@ -13,31 +13,21 @@ type Props = {
 };
 
 const UserAvatar = ({ user, classNames }: Props) => {
-  const initials = user.name
+  const initials = user?.name
     .split(" ")
-    .map((n) => n[0])
+    .map((n: string) => n[0])
     .join("")
     .toUpperCase();
 
   return (
-    <Link href={`/profile/${user?.$id}`}>
+    <Link href={`/profile/${user?.id}`}>
       <Avatar className={cn("size-9", classNames?.avatar)}>
         <AvatarImage
-          src={user.image || ""}
-          alt={user.name}
+          src={user?.image || "/icons/avatar.svg"}
+          alt={user?.name}
           width={36}
           height={36}
           className={cn("object-cover", classNames?.image)}
-          // render={
-          //   <Image
-          //     src={user.image || "/icons/avatar.svg"}
-          //     alt={user.name}
-          //     width={36}
-          //     height={36}
-          //     quality={100}
-          //     className={cn("object-cover", classNames?.image)}
-          //   />
-          // }
         />
 
         <AvatarFallback

@@ -2,6 +2,7 @@
 
 import { sidebarLinks } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import useAuthStore from "@/stores/authStore";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -12,13 +13,14 @@ const NavLink = ({
   label,
   route,
 }: (typeof sidebarLinks)[0] & { isMobile?: boolean }) => {
+  const user = useAuthStore((state) => state.user);
   const pathname = usePathname();
   const isActive =
     (pathname.includes(route) && route.length > 1) || route === pathname;
 
   return (
     <Link
-      href={route.includes("profile") ? "/profile/me" : route}
+      href={route.includes("profile") ? `/profile/${user?.id}` : route}
       className={cn(
         "flex items-center justify-start gap-4 bg-transparent p-4",
         {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Question } from "@/lib/types/appwrite";
+import { QuestionWithMetadata } from "@/actions/questions";
 import { useCreateQuestion, useUpdateQuestion } from "@/lib/queries/questions";
 import {
   AskQuestionSchema,
@@ -17,7 +17,7 @@ import LoadingButton from "../ui/LoadingButton";
 import ControlledField from "./ControlledField";
 
 type Props = {
-  question?: Question;
+  question?: QuestionWithMetadata;
   userId: string;
 };
 
@@ -29,7 +29,7 @@ const QuestionForm = ({ question, userId }: Props) => {
       defaultValues: {
         title: question?.title || "",
         content: question?.content || "",
-        tags: question?.tags.map((tag) => tag.tag.title) || [],
+        tags: question?.tags.map((tag) => tag.title) || [],
       },
     });
 
@@ -40,12 +40,12 @@ const QuestionForm = ({ question, userId }: Props) => {
     useUpdateQuestion();
 
   const onSubmit = (data: AskQuestionSchemaType) =>
-    question?.$id
+    question?.id
       ? updateQuestion({
-          userId,
-          questionId: question.$id,
-          question: data,
-        })
+        userId,
+        questionId: question.id,
+        question: data,
+      })
       : askQuestion({ userId, question: data });
 
   function handleInputKeyDown(
@@ -180,7 +180,7 @@ const QuestionForm = ({ question, userId }: Props) => {
           </Field>
         )}
       />
-   
+
 
       <div className="mt-16 flex justify-end">
         <LoadingButton
@@ -189,7 +189,7 @@ const QuestionForm = ({ question, userId }: Props) => {
           className="primary-gradient text-light-900 w-fit border-0 py-4"
           size="xl"
         >
-          {question?.$id ? "Update Question" : "Ask Question"}
+          {question?.id ? "Update Question" : "Ask Question"}
         </LoadingButton>
       </div>
     </Form>

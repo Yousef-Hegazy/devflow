@@ -30,14 +30,14 @@ const UserQuestionsTab = async ({ userId, searchParams }: Props) => {
         <DataRenderer
           success={!("error" in questions)}
           error={
-            "error" in questions ? { message: questions.error } : undefined
+            !!questions.error ? { message: questions.error } : undefined
           }
           data={"error" in questions ? [] : questions.rows}
           empty={EMPTY_QUESTION}
           render={(data) => (
             <>
               {data.map((question) => (
-                <QuestionCard key={question.$id} question={question} />
+                <QuestionCard key={question.id} question={question} />
               ))}
             </>
           )}

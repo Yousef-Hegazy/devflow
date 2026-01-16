@@ -64,14 +64,14 @@ export default async function Home({ searchParams }: Props) {
         <DataRenderer
           success={!("error" in questions)}
           error={
-            "error" in questions ? { message: questions.error } : undefined
+            "error" in questions ? { message: questions.error || "Something went wrong" } : undefined
           }
           data={"error" in questions ? [] : questions.rows}
           empty={EMPTY_QUESTION}
           render={(data) => (
             <>
               {data.map((question) => (
-                <QuestionCard key={question.$id} question={question} />
+                <QuestionCard key={question.id} question={question} />
               ))}
             </>
           )}

@@ -13,8 +13,38 @@ import { user } from "@/db/auth-schema";
 import { db } from "@/db/client";
 import { answer, question, questionTag, tag, vote } from "@/db/db-schema";
 import { Tag } from "@/db/schema-types";
-import { getCurrentUser } from "@/lib/server/auth";
 import { and, AnyColumn, desc, eq, sql, SQL, SQLWrapper } from "drizzle-orm";
+
+export type QuestionsRes = {
+    total: number;
+    rows: {
+        id: string;
+        title: string;
+        content: string;
+        views: number;
+        upvotes: number;
+        downvotes: number;
+        answersCount: number;
+        createdAt: Date;
+        author: {
+            id: string;
+            name: string;
+            image: string | null;
+        } | null;
+        tags: {
+            id: string;
+            createdAt: Date;
+            title: string;
+        }[];
+    }[];
+    error?: undefined;
+} | {
+    total: number;
+    rows: never[];
+    error: string;
+};
+
+export type QuestionWithMetadata = QuestionsRes["rows"][number];
 
 //#region searchQuestions
 export async function searchQuestions({
@@ -34,8 +64,6 @@ export async function searchQuestions({
         CACHE_KEYS.QUESTIONS_LIST);
 
     try {
-        // Use cached user when available to improve recommendations
-        const currentUser = await getCurrentUser();
 
         // Build where clauses based on incoming params
         const whereClauses: AnyColumn | SQLWrapper[] = [];
@@ -52,13 +80,13 @@ export async function searchQuestions({
 
         // Build ordering using aggregates where appropriate
         // Use SQL expressions for aggregated upvotes/downvotes
-        const upvotesExprForOrder = sql`SUM(CASE WHEN ${vote.type} = 'upvote' THEN 1 ELSE 0 END)`;
+        const upvotesExprForOrder = sql<number>`SUM(CASE WHEN ${vote.type} = 'upvote' THEN 1 ELSE 0 END)`;
         let orderByCols: SQL[] = [];
         switch (filter) {
             case "recommended":
                 // Recommended: exclude the current user's own content (if any) and prefer popular content
-                if (currentUser) {
-                    whereClauses.push(sql`${question.authorId} != ${currentUser.id}`);
+                if (userId) {
+                    whereClauses.push(sql`${question.authorId} != ${userId}`);
                 }
                 orderByCols = [desc(upvotesExprForOrder), desc(question.views)];
                 break;
@@ -84,9 +112,9 @@ export async function searchQuestions({
 
         // Fetch page of questions with author data and aggregates (upvotes, answersCount)
         // Aggregate upvotes from `vote` table and answersCount from `answer` table
-        const upvotesExpr = sql`SUM(CASE WHEN ${vote.type} = 'upvote' THEN 1 ELSE 0 END)`;
-        const downvotesExpr = sql`SUM(CASE WHEN ${vote.type} = 'downvote' THEN 1 ELSE 0 END)`;
-        const answersCountExpr = sql`COUNT(${answer.id})`;
+        const upvotesExpr = sql<number>`COUNT(DISTINCT CASE WHEN ${vote.type} = 'upvote' THEN ${vote.id} END)`;
+        const downvotesExpr = sql<number>`COUNT(DISTINCT CASE WHEN ${vote.type} = 'downvote' THEN ${vote.id} END)`;
+        const answersCountExpr = sql<number>`COUNT(DISTINCT ${answer.id})`;
 
         const rows = await db.select({
             id: question.id,
@@ -102,14 +130,25 @@ export async function searchQuestions({
                 name: user.name,
                 image: user.image,
             },
-            tags: sql<Array<Tag>>`SELECT id, title, created_at FROM ${tag} WHERE ${tag.id} IN (SELECT ${questionTag.tagId} FROM ${questionTag} WHERE ${questionTag.questionId} = ${question.id})`,
+            tags: sql<Tag[]>`
+      COALESCE(
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'id', ${tag.id},
+            'title', ${tag.title},
+            'createdAt', ${tag.createdAt}
+          )
+        ) FILTER (WHERE ${tag.id} IS NOT NULL),
+        '[]'
+      )
+    `,
         })
             .from(question)
             .leftJoin(user, eq(question.authorId, user.id))
             .leftJoin(vote, eq(question.id, vote.questionId))
             .leftJoin(answer, eq(question.id, answer.questionId))
-            // .leftJoin(questionTag, eq(question.id, questionTag.questionId))
-            // .leftJoin(tag, eq(questionTag.tagId, tag.id))
+            .leftJoin(questionTag, eq(question.id, questionTag.questionId))
+            .leftJoin(tag, eq(questionTag.tagId, tag.id))
             .where(whereClauses.length ? and(...whereClauses) : undefined)
             .groupBy(
                 question.id,
@@ -124,55 +163,6 @@ export async function searchQuestions({
             .orderBy(...orderByCols)
             .limit(pageSize)
             .offset((page - 1) * pageSize);
-
-        // Attach tags for the returned questions
-        // const questionIds = rows.map((r) => r.id);
-        // let tagRows: {
-        //     qtId: string | null,
-        //     questionId: string,
-        //     tagId: string | null,
-        //     tagTitle: string | null,
-        // }[] = [];
-
-        // if (questionIds.length > 0) {
-        //     // Build IN (...) clause safely
-        //     const inList = sql.join(questionIds.map((id) => sql`${id}`), sql`, `);
-
-        //     tagRows = await db.select({
-        //         qtId: questionTag.id,
-        //         questionId: questionTag.questionId,
-        //         tagId: tag.id,
-        //         tagTitle: tag.title,
-        //     })
-        //         .from(questionTag)
-        //         .leftJoin(tag, eq(questionTag.tagId, tag.id))
-        //         .where(sql`${questionTag.questionId} IN (${inList})`);
-        // }
-
-        // const tagsByQuestion = new Map<string, any[]>();
-        // for (const t of tagRows) {
-        //     if (!t.tagId) continue; // skip invalid
-        //     const list = tagsByQuestion.get(t.questionId) || [];
-        //     list.push({ id: t.qtId, tag: { id: t.tagId, title: t.tagTitle } });
-        //     tagsByQuestion.set(t.questionId, list);
-        // }
-
-        // const formatted = rows.map((r) => ({
-        //     id: r.id,
-        //     title: r.title,
-        //     content: r.content,
-        //     upvotes: r.upvotes ? Number(r.upvotes) : 0,
-        //     downvotes: r.downvotes ? Number(r.downvotes) : 0,
-        //     answersCount: r.answersCount ? Number(r.answersCount) : 0,
-        //     views: r.views,
-        //     createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : undefined,
-        //     author: {
-        //         id: r.authorId,
-        //         name: r.authorName,
-        //         image: r.authorImage,
-        //     },
-        //     tags: tagsByQuestion.get(r.id) || [],
-        // }));
 
         return { total, rows };
     } catch (e) {
@@ -372,10 +362,10 @@ export async function getQuestionDetails(id: string) {
     cacheTag(CACHE_KEYS.QUESTION_DETAILS + id);
 
     try {
-        // Aggregates
-        const upvotesExpr = sql`SUM(CASE WHEN ${vote.type} = 'upvote' THEN 1 ELSE 0 END)`;
-        const downvotesExpr = sql`SUM(CASE WHEN ${vote.type} = 'downvote' THEN 1 ELSE 0 END)`;
-        const answersCountExpr = sql`COUNT(${answer.id})`;
+        // Aggregates with DISTINCT to avoid overcounting due to multiple joins
+        const upvotesExpr = sql<number>`COUNT(DISTINCT CASE WHEN ${vote.type} = 'upvote' THEN ${vote.id} END)`;
+        const downvotesExpr = sql<number>`COUNT(DISTINCT CASE WHEN ${vote.type} = 'downvote' THEN ${vote.id} END)`;
+        const answersCountExpr = sql<number>`COUNT(DISTINCT ${answer.id})`;
 
         const rows = await db
             .select({
@@ -392,12 +382,25 @@ export async function getQuestionDetails(id: string) {
                     name: user.name,
                     image: user.image,
                 },
-                tags: sql<Array<Tag>>`SELECT id, title, created_at FROM ${tag} WHERE ${tag.id} IN (SELECT ${questionTag.tagId} FROM ${questionTag} WHERE ${questionTag.questionId} = ${question.id})`,
+                tags: sql<Tag[]>`
+                    COALESCE(
+                        json_agg(
+                            DISTINCT jsonb_build_object(
+                                'id', ${tag.id},
+                                'title', ${tag.title},
+                                'createdAt', ${tag.createdAt}
+                            )
+                        ) FILTER (WHERE ${tag.id} IS NOT NULL),
+                        '[]'
+                    )
+                `,
             })
             .from(question)
             .leftJoin(user, eq(question.authorId, user.id))
             .leftJoin(vote, eq(question.id, vote.questionId))
             .leftJoin(answer, eq(question.id, answer.questionId))
+            .leftJoin(questionTag, eq(question.id, questionTag.questionId))
+            .leftJoin(tag, eq(questionTag.tagId, tag.id))
             .where(eq(question.id, id))
             .groupBy(
                 question.id,
@@ -414,22 +417,9 @@ export async function getQuestionDetails(id: string) {
         if (!rows || rows.length === 0) return null;
 
         return rows[0];
-
-        // Normalize numeric fields
-        // return {
-        //   id: r.id,
-        //   title: r.title,
-        //   content: r.content,
-        //   upvotes: Number(r.upvotes ?? 0),
-        //   downvotes: Number(r.downvotes ?? 0),
-        //   answersCount: Number(r.answersCount ?? 0),
-        //   views: r.views,
-        //   createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : undefined,
-        //   author: { id: r.author.id, name: r.author.name, image: r.author.image },
-        //   tags: r.tags ?? [],
-        // };
     } catch (error) {
-        handleError(error);
+        const err = handleError(error);
+        console.log({ err })
         return null;
     }
 };

@@ -11,6 +11,7 @@ import { getCurrentUser } from "@/lib/server";
 import { CollectionFilterType } from "@/lib/types/filters";
 import { PaginationSearchParams } from "@/lib/types/pagination";
 import { redirect } from "next/navigation";
+import { QuestionWithMetadata } from "@/actions/questions";
 
 interface Props {
   searchParams: Promise<PaginationSearchParams<CollectionFilterType>>;
@@ -21,19 +22,19 @@ const CollectionsPage = async ({ searchParams }: Props) => {
 
   const { q, filter, p, ps } = sp;
 
-  if (!user || !user.$id) {
+  if (!user || !user.id) {
     redirect("/login");
   }
 
   const questions = await searchUserCollections({
-    userId: user.$id,
+    userId: user.id,
     page: Number(p) || 1,
     pageSize: Number(ps) || 10,
     query: q?.toLowerCase() || "",
     filter,
   });
 
-  const isError = "error" in questions;
+  const isError = !!questions.error;
 
   return (
     <>
@@ -66,7 +67,7 @@ const CollectionsPage = async ({ searchParams }: Props) => {
           render={(data) => (
             <>
               {data.map((question) => (
-                <QuestionCard key={question.$id} question={question} />
+                <QuestionCard key={question.id} question={question as unknown as QuestionWithMetadata} />
               ))}
             </>
           )}

@@ -1,120 +1,9 @@
+import { QuestionWithMetadata } from "@/actions/questions";
+import { getTagDetails, getTagQuestions } from "@/actions/tags";
 import QuestionCard from "@/components/cards/QuestionCard";
 import DataRenderer from "@/components/DataRenderer";
 import LocalSearch from "@/components/search/LocalSearch";
-import { createAdminClient } from "@/lib/appwrite/config";
-import { Question, Tag } from "@/lib/types/appwrite";
-import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
-import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
-import { appwriteConfig } from "@/lib/constants/server";
 import { EMPTY_QUESTION } from "@/lib/constants/states";
-import handleError from "@/lib/errors";
-import { cacheLife, cacheTag } from "next/cache";
-import { Query } from "node-appwrite";
-
-const getTagDetails = async (tagId: string) => {
-  "use cache";
-  cacheLife({
-    revalidate: DEFAULT_CACHE_DURATION,
-  });
-  cacheTag(CACHE_KEYS.TAGS_LIST, tagId);
-
-  try {
-    const { database } = await createAdminClient();
-
-    const tag = database.getRow<Tag>({
-      databaseId: appwriteConfig.databaseId,
-      tableId: appwriteConfig.tagsTableId,
-      rowId: tagId,
-    });
-
-    return tag;
-  } catch (err) {
-    handleError(err);
-
-    return null;
-  }
-};
-
-const getTagQuestions = async ({
-  tagId,
-  page = 1,
-  pageSize = 10,
-  query = "",
-}: {
-  tagId: string;
-  page: number;
-  pageSize: number;
-  query?: string;
-}) => {
-  "use cache";
-
-  cacheLife({
-    revalidate: DEFAULT_CACHE_DURATION,
-  });
-
-  cacheTag(
-    CACHE_KEYS.QUESTIONS_LIST,
-    CACHE_KEYS.QUESTIONS_LIST + String(page) + String(pageSize) + query + tagId,
-  );
-
-  try {
-    const { database } = await createAdminClient();
-
-    const queries = [
-      Query.limit(pageSize),
-      Query.offset((page - 1) * pageSize),
-      Query.select([
-        "$id",
-        "title",
-        "views",
-        "answersCount",
-        "upvotes",
-        "downvotes",
-        "author.name",
-        "author.image",
-        "tags.*",
-        "tags.tag.title",
-      ]),
-      Query.equal("tags.tag.$id", tagId),
-    ];
-
-    queries.push(Query.orderDesc("$createdAt"));
-
-    // switch (filter) {
-    //   case "recommended":
-    //     return { total: 0, rows: [] };
-    //   case "popular":
-    //     queries.push(Query.orderDesc("upvotes"));
-    //     break;
-    //   case "unanswered":
-    //     queries.push(Query.equal("answersCount", 0));
-    //     break;
-    //   default:
-    //     queries.push(Query.orderDesc("$createdAt"));
-    //     break;
-    // }
-
-    if (query) {
-      queries.push(Query.contains("title", query));
-    }
-
-    const question = await database.listRows<Question>({
-      databaseId: appwriteConfig.databaseId,
-      tableId: appwriteConfig.questionsTableId,
-      queries,
-    });
-
-    return question;
-  } catch (err) {
-    const error = handleError(err);
-
-    return {
-      total: 0,
-      rows: [],
-      error: error.message,
-    };
-  }
-};
 
 type Props = {
   params: Promise<{
@@ -169,16 +58,16 @@ const TagDetailsPage = async ({ params, searchParams }: Props) => {
       </section>
 
       <DataRenderer
-        success={!("error" in tagQuestions)}
+        success={!tagQuestions.error}
         error={
-          "error" in tagQuestions ? { message: tagQuestions.error } : undefined
+          tagQuestions.error ? { message: tagQuestions.error } : undefined
         }
-        data={"error" in tagQuestions ? [] : tagQuestions.rows}
+        data={tagQuestions.rows as unknown as QuestionWithMetadata[]}
         empty={EMPTY_QUESTION}
         render={(questions) => (
           <div className="mt-10 flex w-full flex-col gap-6">
             {questions.map((question) => (
-              <QuestionCard key={question.$id} question={question} />
+              <QuestionCard key={question.id} question={question} />
             ))}
           </div>
         )}

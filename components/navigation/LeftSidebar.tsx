@@ -1,12 +1,12 @@
-import { AppUser } from "@/lib/types/appwrite";
-import { logout } from "@/actions/auth";
+import { signOut } from "@/actions/auth";
+import { User } from "@/db/schema-types";
 import { LogOut } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import NavLinks from "./navbar/NavLinks";
 
-const LeftSidebar = async ({ user }: { user: AppUser | null }) => {
+const LeftSidebar = async ({ user }: { user: User | null }) => {
   return (
     <section className="custom-scrollbar background-light900_dark200 light-border shadow-light-300 sticky top-0 left-0 flex h-screen flex-col justify-between overflow-y-auto border-r p-6 pt-36 max-sm:hidden lg:w-66.5 dark:shadow-none">
       <div className="flex flex-1 flex-col gap-6">
@@ -14,8 +14,8 @@ const LeftSidebar = async ({ user }: { user: AppUser | null }) => {
       </div>
 
       <div className="flex flex-col gap-3">
-        {user?.$id ? (
-          <form action={logout}>
+        {user?.id ? (
+          <form action={signOut}>
             <Button
               type="submit"
               className="base-medium text-foreground w-fit rounded border-0 bg-transparent px-4 py-3 shadow-transparent inset-shadow-transparent hover:bg-transparent"

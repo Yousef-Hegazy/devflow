@@ -56,7 +56,7 @@ const CommunityPage = async ({ searchParams }: Props) => {
         render={([res]) => (
           <div className="mt-11 flex flex-wrap gap-5">
             {res.rows.map((user) => (
-              <UserCard key={user.$id} user={user} />
+              <UserCard key={user.id} user={user} />
             ))}
           </div>
         )}

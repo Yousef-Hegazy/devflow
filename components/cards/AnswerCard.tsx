@@ -18,7 +18,7 @@ type Props = {
 
 const AnswerContent = ({ answer, userId, isCompact }: Props) => {
   const answerId = answer.id ?? answer.$id;
-  const createdAt = answer.createdAt ?? answer.$createdAt;
+  const createdAt = answer.createdAt ?? answer.createdAt;
   const author = answer.author ?? {};
   const authorId = author.id ?? author.$id;
   const questionId = answer.questionId ?? answer.question;

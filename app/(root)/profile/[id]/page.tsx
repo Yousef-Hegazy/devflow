@@ -46,7 +46,7 @@ export default async function Profile({ params, searchParams }: Props) {
 
   const questionsFilters = homeFilters.filter((f) => f.value !== "recommended");
 
-  const isCurrentUser = !!(currentUser && user && currentUser.$id === user.$id);
+  const isCurrentUser = !!(currentUser && user && currentUser.id === user.id);
 
   return (
     <>
@@ -81,7 +81,7 @@ export default async function Profile({ params, searchParams }: Props) {
 
               <ProfileLink
                 immgUrl="/icons/calendar.svg"
-                title={dayjs(user.$createdAt).format("MMMM D, YYYY")}
+                title={dayjs(user.createdAt).format("MMMM D, YYYY")}
               />
             </div>
 
@@ -97,7 +97,7 @@ export default async function Profile({ params, searchParams }: Props) {
           {isCurrentUser ? (
             <Button
               className="paragraph-medium! btn-secondary! text-dark300_light900! min-h-12! min-w-44! border-none px-4 py-3"
-              render={<Link href={`/profile/${user.$id}/edit`} />}
+              render={<Link href={`/profile/${user.id}/edit`} />}
             >
               Edit Profile
             </Button>
@@ -149,7 +149,7 @@ export default async function Profile({ params, searchParams }: Props) {
           >
             <Suspense fallback={<Loading />}>
               <UserQuestionsTab
-                userId={user.$id}
+                userId={user.id}
                 searchParams={sp as PaginationSearchParams<HomeFilterType>}
               />
             </Suspense>
@@ -161,7 +161,7 @@ export default async function Profile({ params, searchParams }: Props) {
           >
             <Suspense fallback={<Loading />}>
               <UserAnswersTab
-                userId={user.$id}
+                userId={user.id}
                 searchParams={sp as PaginationSearchParams<AnswersFilterType>}
               />
             </Suspense>
@@ -172,7 +172,7 @@ export default async function Profile({ params, searchParams }: Props) {
           <h3 className="h3-bold text-dark200_light900">Top Tags</h3>
           <div className="mt-7 flex flex-col gap-4">
             <Suspense fallback={<Loading />}>
-              <UserTopTags userId={user.$id} />
+              <UserTopTags userId={user.id} />
             </Suspense>
           </div>
         </div>

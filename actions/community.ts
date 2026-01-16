@@ -1,14 +1,13 @@
 "use server";
 
-import { createAdminClient } from "@/lib/appwrite/config";
+import { user } from "@/db/auth-schema";
+import { db } from "@/db/client";
 import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
-import { appwriteConfig } from "@/lib/constants/server";
 import handleError from "@/lib/errors";
-import { AppUser } from "@/lib/types/appwrite";
 import { UsersFilterType } from "@/lib/types/filters";
+import { asc, count, desc, eq, ilike, or } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
-import { Query } from "node-appwrite";
 
 export type SearchUsersParams = {
     page: number;
@@ -32,44 +31,43 @@ export async function searchUsers({
     cacheTag(CACHE_KEYS.USERS_LIST);
 
     try {
-        const { database } = await createAdminClient();
+        const skip = (page - 1) * pageSize;
 
-        const queries = [
-            Query.limit(pageSize),
-            Query.offset((page - 1) * pageSize),
-            Query.select(["*"]),
-        ];
+        const whereClause = query
+            ? or(
+                ilike(user.name, `%${query}%`),
+                ilike(user.username, `%${query}%`),
+                ilike(user.email, `%${query}%`)
+            )
+            : undefined;
 
+        let orderBy;
         switch (filter) {
             case "popular":
-                queries.push(Query.orderDesc("reputation"));
+                orderBy = desc(user.reputation);
                 break;
             case "oldest":
-                queries.push(Query.orderAsc("$createdAt"));
+                orderBy = asc(user.createdAt);
                 break;
             case "newest":
             default:
-                queries.push(Query.orderDesc("$createdAt"));
+                orderBy = desc(user.createdAt);
                 break;
         }
 
-        if (query) {
-            queries.push(
-                Query.or([
-                    Query.contains("name", query),
-                    Query.contains("username", query),
-                    Query.contains("email", query),
-                ])
-            );
-        }
+        const [totalRes, rows] = await Promise.all([
+            db.select({ value: count() }).from(user).where(whereClause),
+            db.select().from(user)
+                .where(whereClause)
+                .limit(pageSize)
+                .offset(skip)
+                .orderBy(orderBy)
+        ]);
 
-        const res = await database.listRows<AppUser>({
-            databaseId: appwriteConfig.databaseId,
-            tableId: appwriteConfig.usersTableId,
-            queries,
-        });
-
-        return res;
+        return {
+            total: totalRes[0].value,
+            rows,
+        };
     } catch (e) {
         const error = handleError(e);
         return {
@@ -90,16 +88,15 @@ export async function getUserDetails(userId: string) {
     cacheTag(CACHE_KEYS.USER_DETAILS + userId);
 
     try {
-        const { database } = await createAdminClient();
-
-        const user = await database.getRow<AppUser>({
-            databaseId: appwriteConfig.databaseId,
-            tableId: appwriteConfig.usersTableId,
-            rowId: userId,
-            queries: [Query.select(["*"])],
+        const userDetails = await db.query.user.findFirst({
+            where: eq(user.id, userId),
         });
 
-        return user;
+        if (!userDetails) {
+            throw new Error("User not found");
+        }
+
+        return userDetails;
     } catch (err) {
         const error = handleError(err);
         return error;

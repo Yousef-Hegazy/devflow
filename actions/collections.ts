@@ -1,55 +1,47 @@
 "use server";
 
-import { createAdminClient } from "@/lib/appwrite/config";
+import { user } from "@/db/auth-schema";
+import { db } from "@/db/client";
+import { answer, collection, question, questionTag, tag, vote } from "@/db/db-schema";
+import { Tag } from "@/db/schema-types";
 import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
-import { appwriteConfig } from "@/lib/constants/server";
 import handleError from "@/lib/errors";
-import { Collection, Question } from "@/lib/types/appwrite";
 import { CollectionFilterType } from "@/lib/types/filters";
 import { PaginationParams } from "@/lib/types/pagination";
+import { and, asc, desc, eq, sql, SQL } from "drizzle-orm";
 import { cacheLife, cacheTag, updateTag } from "next/cache";
-import { ID, Query } from "node-appwrite";
 
 //#region toggleSaveQuestion
 export async function toggleSaveQuestion(userId: string, questionId: string) {
-    const { database } = await createAdminClient();
+    try {
+        const id = await db.transaction(async (tx) => {
+            const existing = await tx
+                .select({ id: collection.id })
+                .from(collection)
+                .where(and(eq(collection.authorId, userId), eq(collection.questionId, questionId)))
+                .limit(1);
 
-    let res = null;
-
-    const existingCollection = await database.listRows<Collection>({
-        databaseId: appwriteConfig.databaseId,
-        tableId: appwriteConfig.collectionsTableId,
-        queries: [
-            Query.equal("author", userId),
-            Query.equal("question", questionId),
-            Query.limit(1),
-        ]
-    });
-
-    if (existingCollection.total > 0) {
-        await database.deleteRow({
-            databaseId: appwriteConfig.databaseId,
-            tableId: appwriteConfig.collectionsTableId,
-            rowId: existingCollection.rows[0].$id,
-        });
-    } else {
-        const collection = await database.createRow({
-            databaseId: appwriteConfig.databaseId,
-            tableId: appwriteConfig.collectionsTableId,
-            rowId: ID.unique(),
-            data: {
-                author: userId,
-                question: questionId,
+            if (existing.length > 0) {
+                await tx.delete(collection).where(eq(collection.id, existing[0].id));
+                return null;
             }
+
+            const [inserted] = await tx
+                .insert(collection)
+                .values({ authorId: userId, questionId })
+                .returning({ id: collection.id });
+
+            return inserted.id;
         });
 
-        res = collection.$id;
+        updateTag(CACHE_KEYS.USER_COLLECTIONS + userId);
+
+        return id;
+    } catch (e) {
+        const error = handleError(e);
+        throw error;
     }
-
-    updateTag(CACHE_KEYS.USER_COLLECTIONS + userId);
-
-    return res;
 }
 //#endregion
 
@@ -63,20 +55,18 @@ export async function isQuestionSavedByUser(userId: string, questionId: string) 
 
     cacheTag(CACHE_KEYS.USER_COLLECTIONS + userId);
 
-    const { database } = await createAdminClient();
+    try {
+        const rows = await db
+            .select({ id: collection.id })
+            .from(collection)
+            .where(and(eq(collection.authorId, userId), eq(collection.questionId, questionId)))
+            .limit(1);
 
-    const existingCollection = await database.listRows<Collection>({
-        databaseId: appwriteConfig.databaseId,
-        tableId: appwriteConfig.collectionsTableId,
-        queries: [
-            Query.equal("author", userId),
-            Query.equal("question", questionId),
-            Query.limit(1),
-            Query.select(["$id"]),
-        ]
-    });
-
-    return existingCollection.total > 0;
+        return rows.length > 0;
+    } catch (e) {
+        const error = handleError(e);
+        throw error;
+    }
 }
 //#endregion
 
@@ -91,75 +81,105 @@ export async function searchUserCollections({ userId, page = 1, pageSize = 10, q
     cacheTag(CACHE_KEYS.USER_COLLECTIONS + userId);
 
     try {
-        const { database } = await createAdminClient();
-
-        const collectionQueries = [
-            Query.limit(pageSize),
-            Query.offset((page - 1) * pageSize),
-            Query.equal("author", userId),
-            Query.select(["*"])
-        ]
-
-        const questionQueries: string[] = [
-            Query.select([
-                "*",
-                "author.name",
-                "author.image",
-                "tags.*",
-                "tags.tag.title",
-                "collection.$id"
-            ]),
-        ];
-
-        switch (filter) {
-            case "mostvoted":
-                questionQueries.push(Query.orderDesc("upvotes"));
-                break;
-            case "mostviewed":
-                questionQueries.push(Query.orderDesc("views"));
-                break;
-            case "mostanswered":
-                questionQueries.push(Query.orderDesc("answersCount"));
-                break;
-            case "oldest":
-                collectionQueries.push(Query.orderAsc("$createdAt"));
-                break;
-            case "mostrecent":
-                collectionQueries.push(Query.orderDesc("$createdAt"));
-                break;
-        }
+        // Build where clauses
+        const whereClauses: SQL[] = [eq(collection.authorId, userId)];
 
         if (query) {
-            collectionQueries.push(Query.or([
-                Query.contains("question.title", query),
-                Query.contains("question.content", query),
-            ]));
+            const qLike = `%${query}%`;
+            whereClauses.push(sql`(${question.title} ILIKE ${qLike} OR ${question.content} ILIKE ${qLike})`);
         }
 
-        const collections = await database.listRows<Collection>({
-            databaseId: appwriteConfig.databaseId,
-            tableId: appwriteConfig.collectionsTableId,
-            queries: collectionQueries,
-        });
+        // Count total matching saved questions
+        const totalRes = await db.select({ count: sql`count(*)` })
+            .from(collection)
+            .leftJoin(question, eq(collection.questionId, question.id))
+            .where(and(...whereClauses));
 
-        if (collections.total === 0) {
-            return {
-                total: 0,
-                rows: [],
-            };
+        const total = Number(totalRes?.[0]?.count ?? 0);
+
+        if (total === 0) {
+            return { total: 0, rows: [] };
         }
 
-        const collectionIds = collections.rows.map(c => c.$id);
+        // Build ordering
+        const upvotesExpr = sql`SUM(CASE WHEN ${vote.type} = 'upvote' THEN 1 ELSE 0 END)`;
+        const answersCountExpr = sql`COUNT(${answer.id})`;
 
-        questionQueries.push(Query.equal("collection.$id", collectionIds));
+        let orderBy = [desc(collection.createdAt)];
+        switch (filter) {
+            case "mostvoted":
+                orderBy = [desc(upvotesExpr)];
+                break;
+            case "mostviewed":
+                orderBy = [desc(question.views)];
+                break;
+            case "mostanswered":
+                orderBy = [desc(answersCountExpr)];
+                break;
+            case "oldest":
+                orderBy = [asc(collection.createdAt)];
+                break;
+            case "mostrecent":
+            default:
+                orderBy = [desc(collection.createdAt)];
+                break;
+        }
 
-        const res = await database.listRows<Question>({
-            databaseId: appwriteConfig.databaseId,
-            tableId: appwriteConfig.questionsTableId,
-            queries: questionQueries,
-        });
+        // Fetch rows: question + author + aggregates + tags (via subselect)
+        const rows = await db.select({
+            collectionId: collection.id,
+            createdAt: question.createdAt,
+            id: question.id,
+            title: question.title,
+            // content: question.content,
+            views: question.views,
+            upvotes: upvotesExpr,
+            answersCount: answersCountExpr,
+            questionCreatedAt: question.createdAt,
+            author: {
+                id: sql`(${user.id})`,
+                name: sql`(${user.name})`,
+                image: sql`(${user.image})`,
+            },
+            tags: sql<Tag[]>`
+                  COALESCE(
+                    json_agg(
+                      DISTINCT jsonb_build_object(
+                        'id', ${tag.id},
+                        'title', ${tag.title},
+                        'createdAt', ${tag.createdAt}
+                      )
+                    ) FILTER (WHERE ${tag.id} IS NOT NULL),
+                    '[]'
+                  )
+                `,
+        })
+            .from(collection)
+            .leftJoin(question, eq(collection.questionId, question.id))
+            .leftJoin(user, eq(question.authorId, user.id))
+            .leftJoin(vote, eq(question.id, vote.questionId))
+            .leftJoin(answer, eq(question.id, answer.questionId))
+            .leftJoin(questionTag, eq(question.id, questionTag.questionId))
+            .leftJoin(tag, eq(questionTag.tagId, tag.id))
+            .where(and(...whereClauses))
+            .groupBy(
+                collection.id,
+                collection.createdAt,
+                question.id,
+                question.title,
+                // question.content,
+                question.views,
+                question.createdAt,
+                user.id,
+                user.name,
+                user.image,
+            )
+            .orderBy(...orderBy)
+            .limit(pageSize)
+            .offset((page - 1) * pageSize);
 
-        return res;
+
+        return { total, rows };
     } catch (e) {
         const error = handleError(e);
         return {

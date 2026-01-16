@@ -18,7 +18,7 @@ const UserCard = ({ user }: Props) => {
           }}
         />
 
-        <Link href={`/profile/${user.$id}`}>
+        <Link href={`/profile/${user.id}`}>
           <div className="mt-4 text-center">
             <h3 className="h3-bold text-dark200_light900 line-clamp-1">
               {user.name}

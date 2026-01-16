@@ -2,25 +2,25 @@ import { getTimeAgo } from "@/lib/helpers/date";
 import Link from "next/link";
 import TagCard from "./TagCard";
 import Metric from "../Metric";
-import type { Question } from "@/lib/types/appwrite";
+import { QuestionWithMetadata } from "@/actions/questions";
 
 type Props = {
-  question: Question;
+  question: QuestionWithMetadata;
 };
 
 const QuestionCard = ({
   question: {
-    $id,
+    id,
     title,
     tags,
     author,
-    $createdAt,
+    createdAt,
     upvotes,
     answersCount,
     views,
   },
 }: Props) => {
-  const timeAgo = getTimeAgo(new Date($createdAt));
+  const timeAgo = getTimeAgo(createdAt);
 
   return (
     <div className="card-wrapper rounded-[10px] p-9 sm:px-11">
@@ -30,7 +30,7 @@ const QuestionCard = ({
             {timeAgo}
           </span>
 
-          <Link href={`/questions/${$id}`}>
+          <Link href={`/questions/${id}`}>
             <h3 className="sm:h3-semibold base-semibold text-dark200_light900 line-clamp-1 flex-1">
               {title}
             </h3>
@@ -42,9 +42,9 @@ const QuestionCard = ({
         {tags && tags.length > 0
           ? tags.map((tag) => (
               <TagCard
-                key={tag.$id}
-                $id={tag.tag.$id}
-                name={tag.tag.title}
+                key={tag.id}
+                $id={tag.id}
+                name={tag.title}
                 showCount={false}
                 compact
               />
@@ -54,11 +54,11 @@ const QuestionCard = ({
 
       <div className="flex-between mt-6 w-full flex-wrap gap-3">
         <Metric
-          imgUrl={author.image || "/icons/avatar.svg"}
-          alt={author.name}
-          value={author.name}
+          imgUrl={author?.image || "/icons/avatar.svg"}
+          alt={author?.name || ""}
+          value={author?.name || ""}
           title={`• asked ${timeAgo}`}
-          href={`/profile/${author.$id}`}
+          href={`/profile/${author?.id}`}
           classNames={{
             text: "body-medium text-dark400_light700",
           }}
@@ -69,7 +69,7 @@ const QuestionCard = ({
           <Metric
             imgUrl="/icons/like.svg"
             alt="Like"
-            value={upvotes}
+            value={upvotes || 0}
             title=" Votes"
             classNames={{
               text: "small-medium text-dark400_light800",

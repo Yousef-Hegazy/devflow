@@ -1,9 +1,9 @@
-import { AppUser } from "@/lib/types/appwrite";
+import { User } from "@/db/schema-types";
 import { create, StateCreator } from "zustand";
 
 type AuthState = {
     isAuthenticated: boolean;
-    user: AppUser | null;
+    user: User | null;
 }
 
 type AuthActions = {

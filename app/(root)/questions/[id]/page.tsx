@@ -13,7 +13,6 @@ import Votes from "@/components/votes/Votes";
 import { EMPTY_QUESTION } from "@/lib/constants/states";
 import { getTimeAgo } from "@/lib/helpers/date";
 import { getCurrentUser } from "@/lib/server";
-import type { Question } from "@/lib/types/appwrite";
 import { AnswersFilterType } from "@/lib/types/filters";
 import { PaginationSearchParams } from "@/lib/types/pagination";
 import { formatNumber } from "@/lib/utils";
@@ -22,6 +21,7 @@ import { Suspense } from "react";
 import AnswersList from "./AnswersList";
 import ToggleSaveQuestionBtn from "./ToggleSaveQuestionBtn";
 import UserQuestionVotes from "./UserQuestionVotes";
+import { User } from "@/db/schema-types";
 
 type Props = {
   params: Promise<{
@@ -39,41 +39,41 @@ const QuestionDetailsPage = async ({ params, searchParams }: Props) => {
   ]);
 
   return (
-    <DataRenderer<Question>
+    <DataRenderer
       error={!question ? { message: "Question not found." } : undefined}
       empty={EMPTY_QUESTION}
       data={question ? [question] : undefined}
       success={!!question}
       render={([question]) => (
         <>
-          <IncrementQuestionView questionId={question.$id} />
+          <IncrementQuestionView questionId={question.id} />
 
           <div className="flex-start w-full flex-col">
             <div className="flex w-full flex-col-reverse justify-between">
               <div className="flex items-center justify-start gap-1">
                 <UserAvatar
-                  user={question.author}
+                  user={question.author as unknown as User | null}
                   classNames={{
                     avatar: "size-[22px]",
                     fallback: "text-[10px]",
                   }}
                 />
 
-                <Link href={`/profile/${question.author.$id}`}>
+                <Link href={`/profile/${question.author?.id}`}>
                   <p className="paragraph-semibold text-dark300_light700">
-                    {question.author.name.split(" ")[0]}
+                    {question.author?.name.split(" ")[0]}
                   </p>
                 </Link>
               </div>
 
               <div className="flex justify-end gap-2">
-                {user?.$id === question.author.$id ? (
+                {user?.id === question.author?.id ? (
                   <Button
                     className="primary-gradient text-light-900 w-fit border-0 py-3"
                     render={
                       <Link
                         href={{
-                          pathname: `${question.$id}/update`,
+                          pathname: `${question.id}/update`,
                         }}
                       />
                     }
@@ -83,27 +83,27 @@ const QuestionDetailsPage = async ({ params, searchParams }: Props) => {
                 ) : null}
 
                 <Suspense fallback={<Skeleton className="h-6 w-27.5" />}>
-                  {user?.$id ? (
+                  {user?.id ? (
                     <UserQuestionVotes
                       upvotes={question.upvotes}
                       downvotes={question.downvotes}
-                      userId={user?.$id}
-                      questionId={question.$id}
+                      userId={user?.id}
+                      questionId={question.id}
                     />
                   ) : (
                     <Votes
                       upvotes={question.upvotes}
                       downvotes={question.downvotes}
-                      userId={user?.$id}
-                      questionId={question.$id}
+                      userId={user?.id}
+                      questionId={question.id}
                     />
                   )}
                 </Suspense>
 
-                {user?.$id && user.$id !== question.author.$id ? (
+                {user?.id && user.id !== question.author?.id ? (
                   <ToggleSaveQuestionBtn
-                    questionId={question.$id}
-                    userId={user.$id}
+                    questionId={question.id}
+                    userId={user.id}
                   />
                 ) : null}
               </div>
@@ -118,7 +118,7 @@ const QuestionDetailsPage = async ({ params, searchParams }: Props) => {
             <Metric
               imgUrl="/icons/clock.svg"
               alt="clock icon"
-              value={` asked ${getTimeAgo(new Date(question.$createdAt))}`}
+              value={` asked ${getTimeAgo(new Date(question.createdAt))}`}
               title=""
               classNames={{
                 text: "small-regular text-dark400_light700",
@@ -149,18 +149,18 @@ const QuestionDetailsPage = async ({ params, searchParams }: Props) => {
           <PreviewMarkdown content={question.content} />
 
           <div className="mt-8 flex flex-wrap gap-2">
-            {question.tags.map(({ tag }) => (
-              <TagCard key={tag.$id} $id={tag.$id} name={tag.title} compact />
+            {question.tags.map((tag) => (
+              <TagCard key={tag.id} $id={tag.id} name={tag.title} compact />
             ))}
           </div>
 
-          <Suspense fallback={<Loading />} key={question.$id}>
-            <AnswersList questionId={id} userId={user?.$id} searchParams={sp} />
+          <Suspense fallback={<Loading />} key={question.id}>
+            <AnswersList questionId={id} userId={user?.id} searchParams={sp} />
           </Suspense>
 
           <section className="my-5">
             <AnswerForm
-              questionId={question.$id}
+              questionId={question.id}
               questionTitle={question.title}
               questionContent={question.content}
             />

@@ -20,8 +20,8 @@ const RightSidebarContent = async () => {
         <div className="mt-7 flex w-full flex-col gap-7.5">
           {topQuestions?.rows.map((q) => (
             <Link
-              key={q.$id}
-              href={`/questions/${q.$id}`}
+              key={q.id}
+              href={`/questions/${q.id}`}
               className="flex cursor-pointer items-center justify-between gap-7"
             >
               <p className="body-medium text-dark500_light700">{q.title}</p>
@@ -42,8 +42,8 @@ const RightSidebarContent = async () => {
         <div className="mt-7 flex flex-col gap-4">
           {popularTags?.rows.map((tag) => (
             <TagCard
-              key={tag.$id}
-              $id={tag.$id}
+              key={tag.id}
+              $id={tag.id}
               name={tag.title}
               questionsNo={tag.questionsCount}
               showCount

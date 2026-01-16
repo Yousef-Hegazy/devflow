@@ -1,6 +1,6 @@
 "use client";
 
-import { Vote, VoteType } from "@/lib/types/appwrite";
+import { Vote, VoteType } from "@/db/schema-types";
 import {
   useDownvoteAnswer,
   useDownvoteQuestion,
