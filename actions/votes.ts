@@ -6,7 +6,7 @@ import { VoteType } from "@/db/schema-types";
 import { CACHE_KEYS } from "@/lib/constants/cacheKeys";
 import { getCurrentUser } from "@/lib/server";
 import { and, eq } from "drizzle-orm";
-import { revalidateTag, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 
 //#region upvoteQuestion
@@ -135,7 +135,7 @@ export async function upvoteAnswer(answerId: string, questionId: string) {
             }
         });
 
-        updateTag(CACHE_KEYS.QUESTION_ANSWERS + questionId);
+        updateTag(CACHE_KEYS.ANSWER_VOTES);
 
         return { success: true };
     } catch (error) {
@@ -179,7 +179,7 @@ export async function downvoteAnswer(answerId: string, questionId: string) {
             }
         });
 
-        updateTag(CACHE_KEYS.QUESTION_ANSWERS + questionId);
+        updateTag(CACHE_KEYS.ANSWER_VOTES);
 
         return { success: true };
     } catch (error) {

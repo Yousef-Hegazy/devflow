@@ -37,7 +37,7 @@ const UserQuestionsTab = async ({ userId, searchParams }: Props) => {
           render={(data) => (
             <>
               {data.map((question) => (
-                <QuestionCard key={question.id} question={question} />
+                <QuestionCard key={question.id} question={question} isAuthor={question.author?.id === userId} />
               ))}
             </>
           )}

@@ -39,12 +39,10 @@ const AnswersList = async ({ questionId, userId, searchParams }: Props) => {
       </div>
 
       <DataRenderer
-        data={"error" in answersRes ? [] : [answersRes]}
+        data={!!answersRes.error ? [] : [answersRes]}
         empty={EMPTY_ANSWERS}
-        success={!("error" in answersRes)}
-        error={
-          "error" in answersRes ? { message: answersRes.error } : undefined
-        }
+        success={!answersRes.error}
+        error={!!answersRes.error ? { message: answersRes.error } : undefined}
         render={([res]) =>
           res.rows.map((answer) => (
             <AnswerCard key={answer.id} answer={answer} userId={userId} />
@@ -56,7 +54,7 @@ const AnswersList = async ({ questionId, userId, searchParams }: Props) => {
       <div className="mt-10 flex w-full justify-center">
         <AppPagination
           page={Number(searchParams.p) || 1}
-          totalItems={"error" in answersRes ? 1 : answersRes.total}
+          totalItems={!!answersRes.error ? 1 : answersRes.total}
           pageSize={Number(searchParams.ps) || 50}
         />
       </div>

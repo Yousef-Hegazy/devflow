@@ -34,6 +34,7 @@ export async function getUserAnswerVote({
   cacheTag(
     CACHE_KEYS.QUESTION_ANSWERS + questionId,
     CACHE_KEYS.ANSWER_VOTES + userId + answerId,
+    CACHE_KEYS.ANSWER_VOTES
   );
 
   try {

@@ -10,10 +10,11 @@ import { logger } from "@/pino";
 import { cacheLife, cacheTag, updateTag } from "next/cache";
 
 // Drizzle
-import { db } from "@/db/client";
 import { user as userTable } from "@/db/auth-schema";
-import { and, asc, desc, eq, sql, SQL } from "drizzle-orm";
+import { db } from "@/db/client";
 import { answer, vote } from "@/db/db-schema";
+import { VoteType } from "@/db/schema-types";
+import { and, asc, desc, eq, sql, SQL } from "drizzle-orm";
 
 
 //#region answerQuestion
@@ -59,6 +60,7 @@ export async function answerQuestion(answerBody: AnswerSchemaType, questionId: s
         // Invalidate caches
         updateTag(CACHE_KEYS.QUESTION_DETAILS + questionId);
         updateTag(CACHE_KEYS.QUESTION_ANSWERS + questionId);
+        updateTag(CACHE_KEYS.ANSWER_VOTES);
 
         if (!createdAnswerId) throw new Error("Failed to create answer");
 
@@ -70,6 +72,41 @@ export async function answerQuestion(answerBody: AnswerSchemaType, questionId: s
 //#endregion
 
 
+export type AnswersRes = {
+    total: number;
+    rows: {
+        id: string;
+        content: string;
+        createdAt: Date;
+        questionId: string;
+        author: {
+            id: string;
+            name: string;
+            image: string | null;
+        } | null;
+        upvotes: number;
+        downvotes: number;
+    }[];
+    error?: undefined;
+} | {
+    total: number;
+    rows: never[];
+    error: string;
+}
+
+export type AnswerWithMetadata = {
+    id: string;
+    content: string;
+    createdAt: Date;
+    questionId: string;
+    author: {
+        id: string;
+        name: string;
+        image: string | null;
+    } | null;
+    upvotes: number;
+    downvotes: number;
+}
 
 //#region searchAnswers
 export async function searchAnswers({
@@ -84,14 +121,14 @@ export async function searchAnswers({
     filter?: AnswersFilterType;
     questionId?: string;
     userId?: string;
-}) {
+}): Promise<AnswersRes> {
     "use cache";
 
     cacheLife({
         revalidate: DEFAULT_CACHE_DURATION,
     });
 
-    cacheTag(CACHE_KEYS.QUESTION_ANSWERS + questionId);
+    cacheTag(CACHE_KEYS.QUESTION_ANSWERS + questionId, CACHE_KEYS.ANSWER_VOTES);
 
     try {
         // Build where clauses
@@ -100,12 +137,12 @@ export async function searchAnswers({
         if (userId) whereClauses.push(eq(answer.authorId, userId));
 
         // Aggregates for ordering and counts
-        const upvotesExpr = sql`SUM(CASE WHEN ${vote.type} = 'upvote' THEN 1 ELSE 0 END)`;
-        const downvotesExpr = sql`SUM(CASE WHEN ${vote.type} = 'downvote' THEN 1 ELSE 0 END)`;
+        const upvotesExpr = sql<number>`SUM(CASE WHEN ${vote.type} = ${VoteType.UPVOTE.toLowerCase().toString()} THEN 1 ELSE 0 END)`;
+        const downvotesExpr = sql<number>`SUM(CASE WHEN ${vote.type} = ${VoteType.DOWNVOTE.toLowerCase().toString()} THEN 1 ELSE 0 END)`;
 
         // Count total matching rows
         const totalRes = await db
-            .select({ count: sql`count(*)` })
+            .select({ count: sql<number>`count(*)` })
             .from(answer)
             .where(whereClauses.length ? and(...whereClauses) : undefined);
 
@@ -146,17 +183,7 @@ export async function searchAnswers({
             .limit(pageSize)
             .offset((page - 1) * pageSize);
 
-        const formatted = rows.map((r) => ({
-            id: r.id,
-            content: r.content,
-            createdAt: r.createdAt,
-            questionId: r.questionId,
-            author: r.author,
-            upvotes: Number(r.upvotes ?? 0),
-            downvotes: Number(r.downvotes ?? 0),
-        }));
-
-        return { total, rows: formatted };
+        return { total, rows };
     } catch (e) {
         const error = handleError(e);
         logger.error(JSON.stringify(error));
@@ -169,3 +196,53 @@ export async function searchAnswers({
     }
 }
 //#endregion
+
+//#region deleteAnswer
+export async function deleteAnswer(id: string, userId: string) {
+    try {
+        const [deleted] = await db.delete(answer).where(and(eq(answer.id, id), eq(answer.authorId, userId))).returning();
+
+        updateTag(CACHE_KEYS.QUESTION_ANSWERS + deleted.questionId);
+        updateTag(CACHE_KEYS.USER_DETAILS + userId);
+        updateTag(CACHE_KEYS.ANSWER_VOTES);
+        return deleted;
+    } catch (e) {
+        const error = handleError(e);
+        throw error;
+    }
+}
+//#endregion
+
+
+//#region updateAnswer
+export async function updateAnswer(id: string, userId: string, content: string) {
+    try {
+        const [updated] = await db
+            .update(answer)
+            .set({ content })
+            .where(and(eq(answer.id, id), eq(answer.authorId, userId)))
+            .returning();
+
+        updateTag(CACHE_KEYS.QUESTION_ANSWERS + updated.questionId);
+        return updated;
+    } catch (e) {
+        const error = handleError(e);
+        throw error;
+    }
+}
+//#endregion
+
+//#region getAnswerById
+export async function getAnswerById(id: string) {
+    try {
+        const found = await db.query.answer.findFirst({
+            where: eq(answer.id, id),
+        });
+
+        if (!found) return null;
+
+        return found;
+    } catch (error) {
+        throw handleError(error);
+    }
+}

@@ -246,7 +246,8 @@ export async function createQuestion(userId: string, data: AskQuestionSchemaType
 
         // Invalidate relevant caches
         updateTag(CACHE_KEYS.QUESTIONS_LIST);
-        revalidateTag(CACHE_KEYS.TAGS_LIST, "max");
+        updateTag(CACHE_KEYS.TAGS_LIST);
+        updateTag(CACHE_KEYS.USER_DETAILS + userId);
 
         if (!createdQuestionId) throw new Error("Failed to create question");
 
@@ -352,7 +353,7 @@ export async function increaseViewCount(questionId: string) {
 
 
 //#region getQuestionDetails
-export async function getQuestionDetails(id: string) {
+export async function getQuestionDetails(id: string, userId?: string) {
     "use cache";
 
     cacheLife({
@@ -376,6 +377,7 @@ export async function getQuestionDetails(id: string) {
                 upvotes: upvotesExpr,
                 downvotes: downvotesExpr,
                 answersCount: answersCountExpr,
+                userAnswer: userId ? sql<string | null>`(SELECT ${answer.id} FROM ${answer} WHERE ${answer.questionId} = ${question.id} AND ${answer.authorId} = ${userId} LIMIT 1)` : sql<null>`NULL`,
                 createdAt: question.createdAt,
                 author: {
                     id: user.id,
@@ -462,52 +464,23 @@ export async function getHotQuestions() {
 
     try {
         const upvotesExpr = sql`SUM(CASE WHEN ${vote.type} = 'upvote' THEN 1 ELSE 0 END)`;
-        const downvotesExpr = sql`SUM(CASE WHEN ${vote.type} = 'downvote' THEN 1 ELSE 0 END)`;
-        const answersCountExpr = sql`COUNT(${answer.id})`;
+        // const downvotesExpr = sql`SUM(CASE WHEN ${vote.type} = 'downvote' THEN 1 ELSE 0 END)`;
+        // const answersCountExpr = sql`COUNT(${answer.id})`;
 
         const rows = await db
             .select({
                 id: question.id,
                 title: question.title,
-                content: question.content,
-                views: question.views,
-                upvotes: upvotesExpr,
-                downvotes: downvotesExpr,
-                answersCount: answersCountExpr,
-                createdAt: question.createdAt,
-                author: { id: user.id, name: user.name, image: user.image },
-                tags: sql<Array<Tag>>`SELECT id, title, created_at FROM ${tag} WHERE ${tag.id} IN (SELECT ${questionTag.tagId} FROM ${questionTag} WHERE ${questionTag.questionId} = ${question.id})`,
             })
             .from(question)
-            .leftJoin(user, eq(question.authorId, user.id))
             .leftJoin(vote, eq(question.id, vote.questionId))
-            .leftJoin(answer, eq(question.id, answer.questionId))
             .groupBy(
                 question.id,
                 question.title,
-                question.content,
                 question.views,
-                question.createdAt,
-                user.id,
-                user.name,
-                user.image,
             )
             .orderBy(desc(upvotesExpr), desc(question.views))
             .limit(5);
-
-
-        // const formattedRows = rows.map((r) => ({
-        //   id: r.id,
-        //   title: r.title,
-        //   content: r.content,
-        //   upvotes: Number(r.upvotes ?? 0),
-        //   downvotes: Number(r.downvotes ?? 0),
-        //   answersCount: Number(r.answersCount ?? 0),
-        //   views: r.views,
-        //   createdAt: r.createdAt,
-        //   author: { id: r.author.id, name: r.author.name, image: r.author.image },
-        //   tags: r.tags ?? [],
-        // }));
 
         return { total: rows.length, rows };
     } catch (e) {
@@ -515,6 +488,24 @@ export async function getHotQuestions() {
         return {
             total: 0,
             rows: [],
+            error: error.message,
+        };
+    }
+}
+//#endregion
+
+//#region deleteQuestion
+export async function deleteQuestion(id: string, userId: string) {
+
+    try {
+        await db.delete(question).where(and(eq(question.id, id), eq(question.authorId, userId)));
+        updateTag(CACHE_KEYS.QUESTIONS_LIST);
+        updateTag(CACHE_KEYS.USER_DETAILS + userId);
+        updateTag(CACHE_KEYS.TAGS_LIST);
+    } catch (e) {
+        const error = handleError(e);
+        console.log({ error })
+        return {
             error: error.message,
         };
     }

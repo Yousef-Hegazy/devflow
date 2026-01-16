@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Code } from "bright";
 import { MDXRemote } from "next-mdx-remote-client/rsc";
 
@@ -9,13 +10,16 @@ Code.theme = {
 
 type Props = {
   content: string;
+  isCompact?: boolean;
 };
 
-const PreviewMarkdown = ({ content }: Props) => {
+const PreviewMarkdown = ({ content, isCompact }: Props) => {
   const formattedContent = content.replace(/\\/g, "").replace(/&#x20;/g, "");
 
   return (
-    <section className="markdown prose grid wrap-break-word">
+    <section className={cn("markdown prose grid wrap-break-word", {
+      "line-clamp-1": isCompact,
+    })}>
       <MDXRemote
         source={formattedContent}
         components={{
@@ -23,7 +27,9 @@ const PreviewMarkdown = ({ content }: Props) => {
             <Code
               {...props}
               lineNumbers
-              className="shadow-light-200 dark:shadow-dark-200"
+              className={cn("shadow-light-200 dark:shadow-dark-200", {
+                "line-clamp-1": isCompact,
+              })}
             />
           ),
         }}

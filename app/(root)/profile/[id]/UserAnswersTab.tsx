@@ -1,6 +1,6 @@
 "use cache";
 
-import { searchAnswers } from "@/actions/answers";
+import { AnswersRes, searchAnswers } from "@/actions/answers";
 import AnswerCard from "@/components/cards/AnswerCard";
 import DataRenderer from "@/components/DataRenderer";
 import AppPagination from "@/components/navigation/AppPagination";
@@ -26,15 +26,15 @@ const UserAnswersTab = async ({ userId, searchParams }: Props) => {
   return (
     <>
       <DataRenderer
-        data={"error" in answersRes ? [] : [answersRes]}
+        data={answersRes.rows as AnswersRes["rows"]}
         empty={EMPTY_ANSWERS}
         success={!("error" in answersRes)}
         error={
-          "error" in answersRes ? { message: answersRes.error } : undefined
+          !!answersRes.error ? { message: answersRes.error } : undefined
         }
-        render={([res]) =>
-          res.rows.map((answer) => (
-            <AnswerCard key={answer.id} answer={answer} userId={userId} isCompact isLink />
+        render={(res) =>
+          res.map((answer) => (
+            <AnswerCard key={answer.id} answer={answer} userId={userId} isCompact isAuthor={answer.author?.id === userId} />
           ))
         }
       />
@@ -43,7 +43,7 @@ const UserAnswersTab = async ({ userId, searchParams }: Props) => {
       <div className="mt-10 flex w-full justify-center">
         <AppPagination
           page={Number(searchParams.p) || 1}
-          totalItems={"error" in answersRes ? 1 : answersRes.total}
+          totalItems={answersRes.total}
           pageSize={Number(searchParams.ps) || 50}
         />
       </div>

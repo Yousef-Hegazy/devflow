@@ -9,6 +9,7 @@ import NextTopLoader from "nextjs-toploader";
 import { Suspense } from "react";
 import "./globals.css";
 import QueryProvider from "./providers/QueryProvider";
+import CommonAlertDialog from "@/components/ui/CommonAlertDialog";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -57,6 +58,7 @@ async function LayoutContent({ children }: { children: React.ReactNode }) {
             />
             {children}
             <AuthHydrator user={user} />
+            <CommonAlertDialog />
           </QueryProvider>
         </AnchoredToastProvider>
       </ToastProvider>

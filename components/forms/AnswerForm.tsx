@@ -1,6 +1,12 @@
 "use client";
 
-import { useAIAnswer, useAnswerQuestion } from "@/lib/queries/questions";
+import { getAnswerById } from "@/actions/answers";
+import { DEFAULT_CACHE_DURATION } from "@/lib/constants";
+import {
+  useAIAnswer,
+  useAnswerQuestion,
+  useUpdateAnswer,
+} from "@/lib/queries/questions";
 import {
   AIAnswerSchema,
   AnswerSchema,
@@ -9,6 +15,7 @@ import {
 import useAuthStore from "@/stores/authStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MDXEditorMethods } from "@mdxeditor/editor";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -21,47 +28,76 @@ import { toastManager } from "../ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 
 type Props = {
-  initialContent?: string;
+  initialId?: string;
   questionId: string;
   questionTitle?: string;
   questionContent?: string;
 };
 
 const AnswerForm = ({
-  initialContent = "",
   questionId,
   questionTitle = "",
   questionContent = "",
+  initialId,
 }: Props) => {
   const user = useAuthStore((state) => state.user);
   const editorRef = useRef<MDXEditorMethods>(null);
-  const { control, handleSubmit, setValue, getValues } =
-    useForm<AnswerSchemaType>({
-      resolver: zodResolver(AnswerSchema),
-      mode: "all",
-      defaultValues: {
-        content: initialContent,
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    getValues,
+    formState: { isDirty, isValid },
+  } = useForm<AnswerSchemaType>({
+    resolver: zodResolver(AnswerSchema),
+    mode: "all",
+    defaultValues: {
+      content: "",
+    },
+  });
+
+  const { data: initialAnswer, isFetching: isFetchingInitialAnswer } = useQuery(
+    {
+      queryKey: ["answer", initialId],
+      queryFn: async () => {
+        const answer = await getAnswerById(initialId!);
+        if (editorRef.current && answer) {
+          editorRef.current.setMarkdown(answer.content);
+          setValue("content", answer.content || "");
+        }
+        return answer;
       },
-    });
+      enabled: !!initialId,
+      staleTime: DEFAULT_CACHE_DURATION,
+    },
+  );
 
   const { mutate: answerQuestion, isPending: isAnswering } =
     useAnswerQuestion();
+
+  const { mutate: updateAnswer, isPending: isUpdating } = useUpdateAnswer();
 
   const { mutate: generateAIAnswer, isPending: isGeneratingAIAnswer } =
     useAIAnswer();
 
   const onSubmit = (data: AnswerSchemaType) =>
-    answerQuestion(
-      { answer: data, questionId },
-      {
-        onSuccess: () => {
-          setValue("content", "");
-          if (editorRef.current) {
-            editorRef.current.setMarkdown("");
-          }
-        },
-      },
-    );
+    initialAnswer?.id
+      ? updateAnswer({
+          answerId: initialAnswer.id,
+          content: data.content,
+          userId: user?.id || "",
+        })
+      : answerQuestion(
+          { answer: data, questionId },
+          {
+            onSuccess: () => {
+              setValue("content", "");
+              if (editorRef.current) {
+                editorRef.current.setMarkdown("");
+              }
+            },
+          },
+        );
 
   const onGenerateAIAnswer = async () => {
     if (!user?.id) {
@@ -114,7 +150,7 @@ const AnswerForm = ({
 
   return (
     // eslint-disable-next-line react-hooks/refs
-    <Form onSubmit={handleSubmit(onSubmit)} className="gap-6">
+    <Form id="answerForm" onSubmit={handleSubmit(onSubmit)} className="gap-6">
       <div className="flex items-center justify-end">
         <Tooltip disabled={!!user?.id}>
           <TooltipTrigger
@@ -145,6 +181,7 @@ const AnswerForm = ({
       <Controller
         control={control}
         name="content"
+        disabled={isFetchingInitialAnswer}
         render={({ field, fieldState: { invalid, error } }) => (
           <Field className="flex flex-col items-start gap-2" invalid={invalid}>
             <FieldLabel>Your Answer</FieldLabel>
@@ -172,12 +209,15 @@ const AnswerForm = ({
 
       <div className="flex justify-end">
         <LoadingButton
-          isLoading={isAnswering}
+          isLoading={isAnswering || isUpdating}
           type="submit"
           className="primary-gradient text-light-900 w-fit border-0 py-3"
           size="lg"
+          disabled={
+            isFetchingInitialAnswer || (!isDirty && !!initialAnswer) || !isValid
+          }
         >
-          Post Answer
+          {initialId ? "Update Answer" : "Post Answer"}
         </LoadingButton>
       </div>
     </Form>

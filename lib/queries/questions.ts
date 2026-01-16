@@ -1,5 +1,6 @@
+import { answerQuestion, deleteAnswer, updateAnswer } from "@/actions/answers";
 import { isQuestionSavedByUser, toggleSaveQuestion } from "@/actions/collections";
-import {  createQuestion, updateQuestion } from "@/actions/questions";
+import { createQuestion, deleteQuestion, updateQuestion } from "@/actions/questions";
 import { toastManager } from "@/components/ui/toast";
 import { logger } from "@/pino";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,7 +8,6 @@ import { useRouter } from "next/navigation";
 import { CACHE_KEYS } from "../constants/cacheKeys";
 import { client } from "../rpc";
 import { AIAnswerSchemaType, AnswerSchemaType, AskQuestionSchemaType } from "../validators/questionSchemas";
-import { answerQuestion } from "@/actions/answers";
 
 export function useCreateQuestion() {
     const router = useRouter();
@@ -79,6 +79,28 @@ export function useAnswerQuestion() {
     })
 }
 
+export function useUpdateAnswer() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ answerId, userId, content }: { answerId: string, content: AnswerSchemaType["content"], userId: string }) => updateAnswer(answerId, userId, content),
+        onSuccess: async (data) => {
+            await queryClient.invalidateQueries({ queryKey: ["answer", data.id] });
+            toastManager.add({
+                title: "Answer Updated",
+                description: "Your answer has been updated successfully.",
+                type: "success",
+            });
+        },
+        onError: (error) => {
+            toastManager.add({
+                title: "Failed to Update Answer",
+                description: error.message || "An error occurred while updating your answer.",
+                type: "error",
+            })
+        }
+    });
+}
+
 export function useAIAnswer() {
     return useMutation({
         mutationFn: async ({ question, content, answer }: AIAnswerSchemaType) => {
@@ -136,4 +158,47 @@ export function useIsQuestionSavedByUser({ userId, questionId }: { userId: strin
         queryFn: () => isQuestionSavedByUser(userId, questionId),
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
+}
+
+export function useDeleteQuestion() {
+    return useMutation({
+        mutationFn: ({ questionId, userId }: { questionId: string, userId: string }) => deleteQuestion(questionId, userId),
+        onSuccess: async () => {
+            toastManager.add({
+                title: "Question Deleted",
+                description: "The question has been deleted successfully.",
+                type: "success",
+            });
+        },
+        onError: (error) => {
+            toastManager.add({
+                title: "Failed to complete action",
+                description: error.message || "An error occurred while performing the action.",
+                type: "error",
+            })
+        }
+    })
+}
+
+export function useDeleteAnswer() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ answerId, userId }: { answerId: string, userId: string }) => deleteAnswer(answerId, userId),
+        onSuccess: async (data) => {
+            await queryClient.invalidateQueries({ queryKey: ["answer", data.id] });
+
+            toastManager.add({
+                title: "Answer Deleted",
+                description: "The answer has been deleted successfully.",
+                type: "success",
+            });
+        },
+        onError: (error) => {
+            toastManager.add({
+                title: "Failed to complete action",
+                description: error.message || "An error occurred while performing the action.",
+                type: "error",
+            })
+        }
+    })
 }

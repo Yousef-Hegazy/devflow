@@ -157,7 +157,7 @@ export default async function Profile({ params, searchParams }: Props) {
 
           <TabsPanel
             value="answers"
-            className="mt-5 flex w-full flex-col gap-6"
+            className="mt-5 flex w-full flex-col gap-10 overflow-visible"
           >
             <Suspense fallback={<Loading />}>
               <UserAnswersTab

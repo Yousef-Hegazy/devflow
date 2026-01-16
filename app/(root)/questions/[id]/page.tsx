@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import UserAvatar from "@/components/UserAvatar";
 import Votes from "@/components/votes/Votes";
+import { User } from "@/db/schema-types";
 import { EMPTY_QUESTION } from "@/lib/constants/states";
 import { getTimeAgo } from "@/lib/helpers/date";
 import { getCurrentUser } from "@/lib/server";
@@ -21,20 +22,21 @@ import { Suspense } from "react";
 import AnswersList from "./AnswersList";
 import ToggleSaveQuestionBtn from "./ToggleSaveQuestionBtn";
 import UserQuestionVotes from "./UserQuestionVotes";
-import { User } from "@/db/schema-types";
 
 type Props = {
   params: Promise<{
     id: string;
   }>;
-  searchParams: Promise<PaginationSearchParams<AnswersFilterType>>;
+  searchParams: Promise<
+    PaginationSearchParams<AnswersFilterType> & { editAnswer?: string }
+  >;
 };
 
 const QuestionDetailsPage = async ({ params, searchParams }: Props) => {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
-  const [user, question, views] = await Promise.all([
-    getCurrentUser(),
-    getQuestionDetails(id),
+  const user = await getCurrentUser();
+  const [question, views] = await Promise.all([
+    getQuestionDetails(id, user?.id),
     getQuestionViews(id),
   ]);
 
@@ -161,6 +163,11 @@ const QuestionDetailsPage = async ({ params, searchParams }: Props) => {
           <section className="my-5">
             <AnswerForm
               questionId={question.id}
+              initialId={
+                sp.editAnswer || typeof question.userAnswer === "string"
+                  ? question.userAnswer as string
+                  : undefined
+              }
               questionTitle={question.title}
               questionContent={question.content}
             />

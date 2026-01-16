@@ -3,9 +3,11 @@ import Link from "next/link";
 import TagCard from "./TagCard";
 import Metric from "../Metric";
 import { QuestionWithMetadata } from "@/actions/questions";
+import EditDeleteAction from "../EditDeleteAction";
 
 type Props = {
   question: QuestionWithMetadata;
+  isAuthor?: boolean;
 };
 
 const QuestionCard = ({
@@ -19,13 +21,14 @@ const QuestionCard = ({
     answersCount,
     views,
   },
+  isAuthor,
 }: Props) => {
   const timeAgo = getTimeAgo(createdAt);
 
   return (
     <div className="card-wrapper rounded-[10px] p-9 sm:px-11">
-      <div className="flex flex-col-reverse items-start justify-between gap-5 sm:flex-row">
-        <div>
+      <div className="flex flex-col-reverse items-center justify-between gap-5 sm:flex-row">
+        <div className="flex-1">
           <span className="subtle-regular text-dark400_light700 line-clamp-1 flex sm:hidden">
             {timeAgo}
           </span>
@@ -36,6 +39,8 @@ const QuestionCard = ({
             </h3>
           </Link>
         </div>
+
+        {isAuthor? <EditDeleteAction type="question" itemId={id} /> : null}
       </div>
 
       <div className="mt-3.5 flex w-full flex-wrap gap-2">

@@ -30,7 +30,6 @@ export const AnswerSchema = z.object({
 
 export type AnswerSchemaType = z.infer<typeof AnswerSchema>;
 
-
 export const AIAnswerSchema = z.object({
     question: z.string()
         .min(5, { error: "Question is required and must be at least 5 characters long." })
